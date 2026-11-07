@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import RoleGuard from '@/components/RoleGuard';
 import Loader from '@/components/Loader';
+import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { documentTypeLabel, formatDate, formatDateTime, idLabelFor, maskDocumentNumber } from '@/lib/ldrs';
 import { ArrowLeft, Printer, ShieldCheck } from 'lucide-react';
@@ -219,6 +220,7 @@ function HandoverReceiptContent() {
 export default function HandoverReceipt() {
   return (
     <RoleGuard allow={['Officer', 'Admin']}>
+      <PageHeader title="Handover receipt" breadcrumbs={[{ label: 'Handover', to: '/handover' }, { label: 'Receipt' }]} />
       <HandoverReceiptContent />
     </RoleGuard>
   );

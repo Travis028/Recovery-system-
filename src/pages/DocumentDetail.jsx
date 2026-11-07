@@ -157,7 +157,11 @@ function DocumentDetailContent() {
 export default function DocumentDetail() {
   return (
     <RoleGuard allow={['Finder', 'Officer', 'Admin']}>
-      <PageHeader title="Document record" description="Full details are shown only here, never in lists." />
+      <PageHeader
+        title="Document record"
+        description="Full details are shown only here, never in lists."
+        breadcrumbs={[{ label: 'Documents', to: '/documents' }, { label: 'Record' }]}
+      />
       <DocumentDetailContent />
     </RoleGuard>
   );

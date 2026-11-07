@@ -408,6 +408,7 @@ export default function SecureHandover() {
       <PageHeader
         title="Secure handover"
         description="Verify the reference code, the document and the one-time code before releasing the document."
+        breadcrumbs={[{ label: 'Handover', to: '/handover' }, { label: 'Secure handover' }]}
       />
       <SecureHandoverContent />
     </RoleGuard>
