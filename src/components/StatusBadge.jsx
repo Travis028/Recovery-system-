@@ -1,25 +1,19 @@
-import { cn } from '@/lib/utils';
-import { CLAIM_STATUS_STYLES, DOC_STATUS_STYLES, MATCH_STATUS_STYLES, LOSS_STATUS_STYLES } from '@/lib/ldrs';
+import { Badge } from '@/components/ui/badge';
 
-const STYLE_MAPS = {
-  document: DOC_STATUS_STYLES,
-  match: MATCH_STATUS_STYLES,
-  loss: LOSS_STATUS_STYLES,
-  claim: CLAIM_STATUS_STYLES,
+// Which status tone each record status uses. Kept here so every list shows the same colours.
+const TONES = {
+  document: { Found: 'info', Matched: 'accent', Notified: 'primary', Returned: 'success', Unclaimed: 'warning' },
+  match: { Pending: 'warning', Confirmed: 'success', Rejected: 'danger', Returned: 'neutral' },
+  loss: { Open: 'info', Matched: 'accent', Closed: 'success' },
+  claim: { Pending: 'warning', Approved: 'success', Rejected: 'danger' },
+  request: { Open: 'warning', Completed: 'success', Declined: 'neutral' },
 };
 
 export default function StatusBadge({ status, kind = 'document', className }) {
-  const styles = STYLE_MAPS[kind] || DOC_STATUS_STYLES;
-  const tone = styles[status] || 'bg-slate-100 text-slate-700 border-slate-200';
+  const tone = (TONES[kind] || TONES.document)[status] || 'neutral';
   return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wide',
-        tone,
-        className,
-      )}
-    >
+    <Badge tone={tone} className={className}>
       {status || 'Unknown'}
-    </span>
+    </Badge>
   );
 }

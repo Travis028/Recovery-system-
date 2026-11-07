@@ -32,33 +32,6 @@ export function documentTypeLabel(type) {
 
 export const DOCUMENT_STATUSES = ['Found', 'Matched', 'Notified', 'Returned', 'Unclaimed'];
 
-export const DOC_STATUS_STYLES = {
-    Found: 'bg-blue-50 text-blue-700 border-blue-200',
-    Matched: 'bg-violet-50 text-violet-700 border-violet-200',
-    Notified: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    Returned: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    Unclaimed: 'bg-amber-50 text-amber-700 border-amber-200',
-};
-
-export const MATCH_STATUS_STYLES = {
-    Pending: 'bg-amber-50 text-amber-700 border-amber-200',
-    Confirmed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    Rejected: 'bg-rose-50 text-rose-700 border-rose-200',
-    Returned: 'bg-slate-100 text-slate-700 border-slate-200',
-};
-
-export const CLAIM_STATUS_STYLES = {
-    Pending: 'bg-amber-50 text-amber-700 border-amber-200',
-    Approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    Rejected: 'bg-rose-50 text-rose-700 border-rose-200',
-};
-
-export const LOSS_STATUS_STYLES = {
-    Open: 'bg-blue-50 text-blue-700 border-blue-200',
-    Matched: 'bg-violet-50 text-violet-700 border-violet-200',
-    Closed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-};
-
 export const DELIVERY_STATUS_LABELS = {
     Simulated: 'System alert',
     'In-app': 'Delivered in the app',
