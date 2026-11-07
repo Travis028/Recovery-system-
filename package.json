@@ -2,7 +2,7 @@
   "name": "ldrs-lost-documents-recovery-system",
   "private": true,
   "version": "1.0.0",
-  "description": "LDRS - Lost Documents Recovery System (Project 65) web app prototype",
+  "description": "LDRS: Lost Documents Recovery System, a web app for reporting, matching and safely returning lost identity documents",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -43,5 +43,8 @@
     "tailwindcss-animate": "^1.0.7",
     "vite": "^5.4.10",
     "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
