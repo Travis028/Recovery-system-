@@ -27,6 +27,7 @@ import { createMatchesForDocument, matchLossReportAgainstHeldDocuments } from '@
 import { buildOtpMessage } from '@/lib/notifications';
 import { buildOtpSms } from '@/lib/sms';
 import { AUDIT_ACTIONS } from '@/lib/audit';
+import { toCsv } from '@/lib/csv';
 
 export const OTP_MINUTES = 5;
 export const MAX_OTP_ATTEMPTS = 3;
@@ -654,12 +655,7 @@ export const FUNCTIONS = {
         ];
       }),
     );
-    const csv = [header].concat(rows).map(function (row) {
-      return row.map(function (cell) {
-        const text = String(cell);
-        return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
-      }).join(',');
-    }).join('\n');
+    const csv = toCsv([header].concat(rows));
     await audit(actor, AUDIT_ACTIONS.DATA_EXPORT, 'Anonymised document export (' + rows.length + ' rows)');
     return { filename: 'ldrs-anonymised-' + new Date().toISOString().slice(0, 10) + '.csv', csv };
   },

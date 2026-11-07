@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDateTime } from '@/lib/ldrs';
 import { downloadText } from '@/lib/utils';
+import { toCsv } from '@/lib/csv';
 import { useToast } from '@/components/ui/use-toast';
 
 const ALERT_ACTIONS = ['Failed login', 'Failed two-step login', 'Account locked', 'Login blocked', 'Collection code rejected', 'Search rate limit reached', 'Rapid uploads flagged'];
@@ -40,20 +41,7 @@ function AuditContent({ chain }) {
         return [entry.seq, entry.created_date, entry.actor_role, entry.user_id || '', entry.action, entry.details, entry.hash];
       }),
     );
-    downloadText(
-      'ldrs-audit-' + new Date().toISOString().slice(0, 10) + '.csv',
-      table
-        .map(function (row) {
-          return row
-            .map(function (cell) {
-              const text = String(cell);
-              return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
-            })
-            .join(',');
-        })
-        .join('\n'),
-      'text/csv',
-    );
+    downloadText('ldrs-audit-' + new Date().toISOString().slice(0, 10) + '.csv', toCsv(table), 'text/csv;charset=utf-8');
     base44.entities.AuditLog.create({ action: 'Data export', details: 'Audit trail exported (' + rows.length + ' entries)' });
   };
 
