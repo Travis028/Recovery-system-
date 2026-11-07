@@ -7,7 +7,6 @@ import Loader from '@/components/Loader';
 import MatchCard from '@/components/matches/MatchCard';
 import ClaimCard from '@/components/claims/ClaimCard';
 import useLdrsUser from '@/hooks/useLdrsUser';
-import { confirmMatch, rejectMatch } from '@/lib/matching';
 import { approveClaim, rejectClaim } from '@/lib/claims';
 import { useToast } from '@/components/ui/use-toast';
 import { ClipboardCheck, ShieldCheck } from 'lucide-react';
@@ -125,14 +124,10 @@ function MatchReviewContent() {
   const handleConfirm = async function (match) {
     setBusyId(match.id);
     try {
-      const doc = documentsById[match.document_id];
-      const report = reportsById[match.loss_report_id];
-      const point = doc ? pointsById[doc.pickup_point_id] : null;
-      await confirmMatch({ match, document: doc, report, pickupPoint: point, actor: user });
+      await base44.functions.invoke('confirmMatch', { match_id: match.id });
       await load();
       toast({ tone: 'success', title: 'Match confirmed', description: 'The owner has been alerted with the pickup point and reference code.' });
     } catch (confirmError) {
-      console.error('Match could not be confirmed', confirmError);
       toast({ tone: 'danger', title: 'Could not confirm the match', description: confirmError.message });
     } finally {
       setBusyId(null);
@@ -142,19 +137,10 @@ function MatchReviewContent() {
   const handleReject = async function (match) {
     setBusyId(match.id);
     try {
-      const others = pending.concat(confirmed).filter(function (item) {
-        return item.id !== match.id && item.document_id === match.document_id && item.match_status !== 'Rejected';
-      });
-      await rejectMatch({
-        match,
-        document: documentsById[match.document_id],
-        actor: user,
-        otherActiveMatches: others.length > 0,
-      });
+      await base44.functions.invoke('rejectMatch', { match_id: match.id });
       await load();
       toast({ tone: 'success', title: 'Match rejected', description: 'The document stays available for other reports.' });
     } catch (rejectError) {
-      console.error('Match could not be rejected', rejectError);
       toast({ tone: 'danger', title: 'Could not reject the match', description: rejectError.message });
     } finally {
       setBusyId(null);
