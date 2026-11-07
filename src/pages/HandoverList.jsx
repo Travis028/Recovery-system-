@@ -1,90 +1,128 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { KeyRound, ReceiptText } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import useResource from '@/hooks/useResource';
 import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
-import Loader from '@/components/Loader';
+import ErrorState from '@/components/ErrorState';
+import DataTable from '@/components/data-table/DataTable';
+import { SkeletonRows } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { documentTypeLabel, formatDateTime, maskDocumentNumber, maskName } from '@/lib/ldrs';
-import { FileCheck2, KeyRound, ReceiptText } from 'lucide-react';
+
+async function loadHandovers() {
+  const [waiting, done] = await Promise.all([
+    base44.entities.Match.filter({ match_status: 'Confirmed' }, { sort: '-created_date', limit: 200 }),
+    base44.entities.Handover.filter({}, { sort: '-created_date', limit: 500 }),
+  ]);
+  const ids = [...new Set(waiting.map((match) => match.document_id).concat(done.map((handover) => handover.document_id)))];
+  const documents = {};
+  if (ids.length) {
+    (await base44.entities.Document.filter({ id: { $in: ids } })).forEach(function (doc) {
+      documents[doc.id] = doc;
+    });
+  }
+  return { waiting, done, documents };
+}
+
+function typeOf(documents, id) {
+  return documents[id] ? documentTypeLabel(documents[id].document_type) : 'Document';
+}
 
 function HandoverListContent() {
-  const [loading, setLoading] = useState(true);
-  const [waiting, setWaiting] = useState([]);
-  const [done, setDone] = useState([]);
-  const [docs, setDocs] = useState({});
+  const { data, loading, error, reload } = useResource(loadHandovers, []);
 
-  useEffect(function () {
-    const load = async function () {
-      const [confirmed, handovers] = await Promise.all([
-        base44.entities.Match.filter({ match_status: 'Confirmed' }, { sort: '-created_date', limit: 100 }),
-        base44.entities.Handover.filter({}, { sort: '-created_date', limit: 50 }),
-      ]);
-      const ids = [...new Set(confirmed.map(function (m) { return m.document_id; }).concat(handovers.map(function (h) { return h.document_id; })))];
-      const map = {};
-      if (ids.length) {
-        (await base44.entities.Document.filter({ id: { $in: ids } })).forEach(function (doc) { map[doc.id] = doc; });
-      }
-      setWaiting(confirmed);
-      setDone(handovers);
-      setDocs(map);
-      setLoading(false);
-    };
-    load();
-  }, []);
+  if (loading && !data) return <SkeletonRows label="Loading handovers" />;
+  if (error) return <ErrorState title="Handovers could not be loaded" error={error} onRetry={reload} />;
 
-  if (loading) return <Loader label="Loading handovers" />;
+  const { waiting, done, documents } = data;
+
+  const waitingColumns = [
+    {
+      key: 'document',
+      header: 'Document',
+      sortValue: (match) => typeOf(documents, match.document_id),
+      cell: function (match) {
+        const doc = documents[match.document_id];
+        return (
+          <div>
+            <p className="font-medium">{typeOf(documents, match.document_id)}</p>
+            {doc ? <p className="text-xs text-muted-foreground">{maskName(doc.owner_name) + ' · ' + maskDocumentNumber(doc.document_number)}</p> : null}
+          </div>
+        );
+      },
+    },
+    { key: 'reference', header: 'Reference', sortValue: (match) => match.reference_code, cell: (match) => <span className="font-mono">{match.reference_code}</span> },
+    { key: 'confirmed', header: 'Confirmed', sortValue: (match) => match.updated_date, cell: (match) => <span className="whitespace-nowrap">{formatDateTime(match.updated_date)}</span> },
+    {
+      key: 'action',
+      header: <span className="sr-only">Action</span>,
+      align: 'right',
+      cell: function (match) {
+        return (
+          <Button size="sm" asChild>
+            <Link to={'/handover/' + match.id}>
+              <KeyRound aria-hidden="true" />
+              Start handover
+            </Link>
+          </Button>
+        );
+      },
+    },
+  ];
+
+  const doneColumns = [
+    { key: 'document', header: 'Document', sortValue: (row) => typeOf(documents, row.document_id), cell: (row) => <span className="font-medium">{typeOf(documents, row.document_id)}</span> },
+    { key: 'released_to', header: 'Released to', sortValue: (row) => row.released_to, cell: (row) => row.released_to },
+    { key: 'receipt', header: 'Receipt', sortValue: (row) => row.id, cell: (row) => <span className="font-mono">{row.id.slice(0, 8).toUpperCase()}</span> },
+    {
+      key: 'released',
+      header: 'Released',
+      sortValue: (row) => row.released_at || row.created_date,
+      cell: (row) => <span className="whitespace-nowrap">{formatDateTime(row.released_at || row.created_date)}</span>,
+    },
+    {
+      key: 'action',
+      header: <span className="sr-only">Receipt</span>,
+      align: 'right',
+      cell: function (row) {
+        return (
+          <Button variant="secondary" size="sm" asChild>
+            <Link to={'/receipt/' + row.id} aria-label={'Open receipt ' + row.id.slice(0, 8).toUpperCase()}>
+              <ReceiptText aria-hidden="true" />
+              Receipt
+            </Link>
+          </Button>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="space-y-8">
-      <section>
-        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Awaiting collection</h2>
-        {waiting.length ? (
-          <div className="space-y-3">
-            {waiting.map(function (match) {
-              const doc = docs[match.document_id];
-              return (
-                <div key={match.id} className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-heading text-sm font-semibold text-slate-900">{doc ? documentTypeLabel(doc.document_type) : 'Document'}</p>
-                    <p className="mt-1 text-sm text-slate-600">{doc ? maskName(doc.owner_name) + ' | ' + maskDocumentNumber(doc.document_number) : ''}</p>
-                    <p className="mt-1 text-xs text-slate-500">Reference {match.reference_code} · confirmed {formatDateTime(match.updated_date)}</p>
-                  </div>
-                  <Button className="gap-2 rounded-xl bg-blue-900 hover:bg-blue-950" asChild>
-                    <Link to={'/handover/' + match.id}><KeyRound className="h-4 w-4" />Start handover</Link>
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <EmptyState icon={KeyRound} title="Nobody is waiting to collect" description="Confirmed matches appear here when the owner can collect." />
-        )}
+      <section aria-labelledby="waiting-heading" className="space-y-3">
+        <h2 id="waiting-heading">Awaiting collection</h2>
+        <DataTable
+          caption="Documents awaiting collection"
+          columns={waitingColumns}
+          rows={waiting}
+          rowKey={(match) => match.id}
+          initialSort={{ key: 'confirmed', direction: 'desc' }}
+          emptyState={<EmptyState icon={KeyRound} title="Nobody is waiting to collect" description="Confirmed matches appear here when the owner can collect." />}
+        />
       </section>
-      <section>
-        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Completed handovers (read-only)</h2>
-        {done.length ? (
-          <div className="space-y-3">
-            {done.map(function (handover) {
-              const doc = docs[handover.document_id];
-              return (
-                <div key={handover.id} className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <FileCheck2 className="h-5 w-5 text-emerald-600" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-heading text-sm font-semibold text-slate-900">{doc ? documentTypeLabel(doc.document_type) : 'Document'} · released to {handover.released_to}</p>
-                    <p className="mt-1 text-xs text-slate-500">Receipt {handover.id.slice(0, 8).toUpperCase()} · {formatDateTime(handover.released_at || handover.created_date)}</p>
-                  </div>
-                  <Button variant="outline" className="gap-2 rounded-xl" asChild>
-                    <Link to={'/receipt/' + handover.id}><ReceiptText className="h-4 w-4" />Receipt</Link>
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <EmptyState icon={ReceiptText} title="No handovers yet" description="Each release creates a permanent receipt." />
-        )}
+      <section aria-labelledby="done-heading" className="space-y-3">
+        <h2 id="done-heading">Completed handovers</h2>
+        <DataTable
+          caption="Completed handovers"
+          columns={doneColumns}
+          rows={done}
+          rowKey={(row) => row.id}
+          initialSort={{ key: 'released', direction: 'desc' }}
+          search={{ label: 'Search handovers', placeholder: 'Search by name or receipt number', text: (row) => row.released_to + ' ' + row.id }}
+          emptyState={<EmptyState icon={ReceiptText} title="No handovers yet" description="Each release creates a permanent, read-only receipt." />}
+        />
       </section>
     </div>
   );
@@ -93,7 +131,7 @@ function HandoverListContent() {
 export default function HandoverList() {
   return (
     <RoleGuard allow={['Officer', 'Admin']}>
-      <PageHeader title="Handover" description="Release documents to their owners after verifying identity, and reprint receipts." />
+      <PageHeader title="Handover" description="Release documents to their owners after checking identity, and reprint receipts." />
       <HandoverListContent />
     </RoleGuard>
   );
