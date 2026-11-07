@@ -1,172 +1,205 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AlertTriangle, ChevronRight, FilePlus, FolderOpen } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import useLdrsUser from '@/hooks/useLdrsUser';
+import useResource from '@/hooks/useResource';
 import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
-import Loader from '@/components/Loader';
-import DocumentRow from '@/components/documents/DocumentRow';
+import ErrorState from '@/components/ErrorState';
+import StatusBadge from '@/components/StatusBadge';
+import DataTable from '@/components/data-table/DataTable';
+import FilterChips from '@/components/ui/filter-chips';
+import { SkeletonRows } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import useLdrsUser from '@/hooks/useLdrsUser';
-import { DOCUMENT_STATUSES, nameSimilarity, normalizeId } from '@/lib/ldrs';
-import { FolderOpen, FilePlus, Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { DOCUMENT_STATUSES, documentTypeLabel, formatDate, maskDocumentNumber, maskName } from '@/lib/ldrs';
 
 function DocumentsContent() {
   const { user, role } = useLdrsUser();
-  const [loading, setLoading] = useState(true);
-  const [documents, setDocuments] = useState([]);
-  const [points, setPoints] = useState([]);
   const [status, setStatus] = useState('All');
-  const [query, setQuery] = useState('');
 
-  useEffect(
-    function () {
-      let active = true;
-      const load = async function () {
-        if (!user) return;
-        const filter = {};
-        if (role === 'Finder') filter.finder_user_id = user.id;
-        if (role === 'Officer' && user.pickup_point_id) filter.pickup_point_id = user.pickup_point_id;
-
-        const page = await base44.entities.Document.filter(filter, { sort: '-created_date', limit: 100 });
-        const pointList = await base44.entities.PickupPoint.list();
-
-        if (!active) return;
-        setDocuments(page.items || []);
-        setPoints(Array.isArray(pointList) ? pointList : []);
-        setLoading(false);
-      };
-      load();
-      return function () {
-        active = false;
-      };
+  const { data, loading, error, reload } = useResource(
+    async function () {
+      const filter = {};
+      if (role === 'Finder') filter.finder_user_id = user.id;
+      const [documents, points] = await Promise.all([
+        base44.entities.Document.filter(filter, { sort: '-created_date', limit: 500 }),
+        base44.entities.PickupPoint.list(),
+      ]);
+      const pointNames = {};
+      points.forEach(function (point) {
+        pointNames[point.id] = point.name;
+      });
+      return { documents, pointNames };
     },
-    [role, user ? user.id : null, user ? user.pickup_point_id : null],
+    [user.id, role],
   );
 
-  if (!user) return <Loader label="Loading documents" />;
+  if (loading && !data) return <SkeletonRows label="Loading documents" />;
+  if (error) return <ErrorState title="Documents could not be loaded" error={error} onRetry={reload} />;
 
-  const pointName = function (id) {
-    const point = points.find(function (item) {
-      return item.id === id;
-    });
-    return point ? point.name : '';
-  };
+  const { documents, pointNames } = data;
+  const canRegister = role === 'Finder' || role === 'Officer';
 
-  const visible = documents.filter(function (doc) {
-    if (status !== 'All' && doc.status !== status) return false;
-    const term = String(query || '').trim();
-    if (!term) return true;
-    const needle = normalizeId(term);
+  if (!documents.length) {
     return (
-      (needle && normalizeId(doc.document_number).includes(needle)) ||
-      nameSimilarity(doc.owner_name, term) >= 0.6 ||
-      String(doc.found_location || '').toLowerCase().includes(term.toLowerCase())
+      <EmptyState
+        icon={FolderOpen}
+        title={role === 'Finder' ? 'You have not registered any documents yet' : role === 'Officer' ? 'No documents are held at this station' : 'No documents recorded yet'}
+        description={role === 'Finder' ? 'Documents you hand in at a pickup point are listed here.' : 'Documents registered at a pickup point are listed here.'}
+        action={
+          canRegister ? (
+            <Button asChild>
+              <Link to="/report-found">
+                <FilePlus aria-hidden="true" />
+                Register a found document
+              </Link>
+            </Button>
+          ) : null
+        }
+      />
     );
+  }
+
+  const counts = { All: documents.length };
+  documents.forEach(function (doc) {
+    counts[doc.status] = (counts[doc.status] || 0) + 1;
+  });
+  const rows = status === 'All' ? documents : documents.filter(function (doc) {
+    return doc.status === status;
   });
 
-  if (loading) return <Loader label="Loading documents" />;
-
-  // Numbers stay hidden in lists for every role until a record is opened.
-  const maskList = true;
-
-  const emptyTitle =
-    role === 'Finder'
-      ? 'You have not reported any documents yet'
-      : role === 'Officer'
-        ? 'No documents are currently held at this station'
-        : 'No documents recorded yet';
+  const columns = [
+    {
+      key: 'type',
+      header: 'Document',
+      sortValue: function (doc) {
+        return documentTypeLabel(doc.document_type);
+      },
+      cell: function (doc) {
+        return (
+          <div className="min-w-[10rem]">
+            <Link to={'/documents/' + doc.id} className="font-medium text-foreground hover:text-primary hover:underline">
+              {documentTypeLabel(doc.document_type)}
+            </Link>
+            {doc.duplicate_flag ? (
+              <Badge tone="warning" className="ml-2">
+                <AlertTriangle aria-hidden="true" />
+                Possible duplicate
+              </Badge>
+            ) : null}
+            <p className="text-xs text-muted-foreground">{maskName(doc.owner_name) + ' · ' + maskDocumentNumber(doc.document_number)}</p>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'found',
+      header: 'Found',
+      sortValue: function (doc) {
+        return doc.date_found;
+      },
+      cell: function (doc) {
+        return (
+          <div className="min-w-[10rem]">
+            <p>{formatDate(doc.date_found)}</p>
+            <p className="max-w-[16rem] truncate text-xs text-muted-foreground" title={doc.found_location}>
+              {doc.found_location}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'point',
+      header: 'Held at',
+      sortValue: function (doc) {
+        return pointNames[doc.pickup_point_id] || '';
+      },
+      cell: function (doc) {
+        return <span className="whitespace-nowrap">{pointNames[doc.pickup_point_id] || '—'}</span>;
+      },
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortValue: function (doc) {
+        return doc.status;
+      },
+      cell: function (doc) {
+        return <StatusBadge status={doc.status} />;
+      },
+    },
+    {
+      key: 'open',
+      header: <span className="sr-only">Open</span>,
+      align: 'right',
+      cell: function (doc) {
+        return (
+          <Button variant="ghost" size="icon-sm" asChild>
+            <Link to={'/documents/' + doc.id} aria-label={'Open ' + documentTypeLabel(doc.document_type) + ' record'}>
+              <ChevronRight aria-hidden="true" />
+            </Link>
+          </Button>
+        );
+      },
+    },
+  ];
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <div className="flex flex-wrap gap-2">
-          {['All'].concat(DOCUMENT_STATUSES).map(function (item) {
-            const active = status === item;
-            return (
-              <button
-                key={item}
-                type="button"
-                onClick={function () {
-                  setStatus(item);
-                }}
-                className={cn(
-                  'rounded-full px-3.5 py-1.5 text-xs font-semibold transition',
-                  active ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
-                )}
-              >
-                {item === 'All' ? 'All documents' : item}
-              </button>
-            );
-          })}
-        </div>
-        <div className="relative mt-4">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            className="pl-9"
-            value={query}
-            placeholder="Search by name, document number or place found"
-            onChange={function (event) {
-              setQuery(event.target.value);
-            }}
+    <div className="space-y-3">
+      <DataTable
+        caption="Documents"
+        columns={columns}
+        rows={rows}
+        rowKey={function (doc) {
+          return doc.id;
+        }}
+        initialSort={{ key: 'found', direction: 'desc' }}
+        search={{
+          label: 'Search documents',
+          placeholder: 'Search by name, number, place found or pickup point',
+          text: function (doc) {
+            return [doc.owner_name, doc.document_number, doc.found_location, documentTypeLabel(doc.document_type), pointNames[doc.pickup_point_id]].join(' ');
+          },
+        }}
+        toolbar={
+          <FilterChips
+            label="Filter by status"
+            value={status}
+            onChange={setStatus}
+            options={['All'].concat(DOCUMENT_STATUSES).map(function (item) {
+              return { value: item, label: item === 'All' ? 'All' : item, count: counts[item] || 0 };
+            })}
           />
-        </div>
-      </div>
-
-      {visible.length ? (
-        <div className="space-y-3">
-          {visible.map(function (doc) {
-            return (
-              <DocumentRow key={doc.id} document={doc} pickupPointName={pointName(doc.pickup_point_id)} mask={maskList} />
-            );
-          })}
-        </div>
-      ) : documents.length ? (
-        <EmptyState
-          icon={FolderOpen}
-          title="No documents match this filter"
-          description="Try another status or clear the search box."
-        />
-      ) : (
-        <EmptyState
-          icon={FolderOpen}
-          title={emptyTitle}
-          description={
-            role === 'Finder'
-              ? 'Documents you hand in at a pickup point will be listed here.'
-              : 'Documents registered at this pickup point will be listed here.'
-          }
-          action={
-            role === 'Finder' || role === 'Officer' ? (
-              <Button className="gap-2 rounded-xl bg-blue-900 hover:bg-blue-950" asChild>
-                <Link to="/report-found">
-                  <FilePlus className="h-4 w-4" />
-                  Register a found document
-                </Link>
-              </Button>
-            ) : null
-          }
-        />
-      )}
-
-      {visible.length ? (
-        <p className="text-xs text-slate-500">
-          Names and numbers are partly hidden in this list. Open a document to see the full record — opening it is
-          recorded in the audit trail.
-        </p>
-      ) : null}
+        }
+      />
+      <p className="text-xs text-muted-foreground">
+        Names and numbers are partly hidden in this list. Open a record to see the full details; opening it is recorded in the audit trail.
+      </p>
     </div>
   );
 }
 
 export default function Documents() {
+  const { role } = useLdrsUser();
   return (
     <RoleGuard allow={['Finder', 'Officer', 'Admin']}>
       <PageHeader
         title="Documents"
-        description="Documents handed in at pickup points, with their current status."
+        description="Documents handed in at pickup points and their current status."
+        actions={
+          role === 'Finder' || role === 'Officer' ? (
+            <Button asChild>
+              <Link to="/report-found">
+                <FilePlus aria-hidden="true" />
+                Register found document
+              </Link>
+            </Button>
+          ) : null
+        }
       />
       <DocumentsContent />
     </RoleGuard>
