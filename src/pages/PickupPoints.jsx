@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { BadgeCheck, Building2, Clock, Loader2, MapPin, Pencil, Phone, Plus, ShieldAlert } from 'lucide-react';
+import { BadgeCheck, Building2, Clock, Loader2, MapPin, Pencil, Phone, Plus, Power, ShieldAlert, ShieldOff } from 'lucide-react';
+import RowActions from '@/components/data-table/RowActions';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import useResource from '@/hooks/useResource';
@@ -193,29 +194,25 @@ export default function PickupPoints() {
       align: 'right',
       cell: function (point) {
         return (
-          <div className="flex justify-end gap-1.5">
-            <Button size="sm" variant="ghost" onClick={function () { open(point); }} aria-label={'Edit ' + point.name}>
-              <Pencil aria-hidden="true" />
-              Edit
-            </Button>
-            {point.verified ? (
-              <Button size="sm" variant="secondary" onClick={function () { change(point, { verified: false }, 'Verification removed'); }}>
-                Remove verification
-              </Button>
-            ) : (
+          <div className="flex items-center justify-end gap-1.5">
+            {point.verified ? null : (
               <Button size="sm" variant="success" onClick={function () { change(point, { verified: true, verified_at: new Date().toISOString() }, 'Pickup point verified'); }}>
                 Mark verified
               </Button>
             )}
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={function () {
-                change(point, { active: !point.active }, point.active ? 'Pickup point deactivated' : 'Pickup point reactivated');
-              }}
-            >
-              {point.active ? 'Deactivate' : 'Reactivate'}
-            </Button>
+            <RowActions
+              label={'Actions for ' + point.name}
+              items={[
+                { label: 'Edit', icon: Pencil, onSelect: function () { open(point); } },
+                point.verified ? { label: 'Remove verification', icon: ShieldOff, onSelect: function () { change(point, { verified: false }, 'Verification removed'); } } : null,
+                {
+                  label: point.active ? 'Deactivate' : 'Reactivate',
+                  icon: Power,
+                  danger: point.active,
+                  onSelect: function () { change(point, { active: !point.active }, point.active ? 'Pickup point deactivated' : 'Pickup point reactivated'); },
+                },
+              ].filter(Boolean)}
+            />
           </div>
         );
       },

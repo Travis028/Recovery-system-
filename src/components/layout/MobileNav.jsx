@@ -9,7 +9,7 @@ export default function MobileNav({ open, onOpenChange, sections }) {
   };
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="lg:hidden">
+      <SheetContent className="xl:hidden">
         <SheetTitle className="sr-only">Menu</SheetTitle>
         <div className="flex h-topbar items-center border-b border-border px-5">
           <Brand />

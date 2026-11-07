@@ -32,7 +32,7 @@ function MobileRow({ row, columns }) {
         </dl>
       ) : null}
       {actions.map(function (column) {
-        const content = column.cell(row);
+        const content = (column.mobileCell || column.cell)(row);
         return content ? (
           <div key={column.key} className="flex flex-wrap gap-2">
             {content}
@@ -46,7 +46,7 @@ function MobileRow({ row, columns }) {
 /**
  * Table with sortable columns, an optional search box and pagination.
  *
- * columns: [{ key, header, cell(row), sortValue?(row), className?, align? }]
+ * columns: [{ key, header, cell(row), sortValue?(row), mobileCell?(row), className?, align? }]
  * A column is sortable when it has sortValue. initialSort: { key, direction: 'asc' | 'desc' }.
  * search: { label, placeholder, text(row) } filters rows by the text it returns.
  * toolbar: extra filters shown next to the search box.

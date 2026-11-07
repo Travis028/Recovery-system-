@@ -135,6 +135,13 @@ function DocumentsContent() {
       key: 'open',
       header: <span className="sr-only">Open</span>,
       align: 'right',
+      mobileCell: function (doc) {
+        return (
+          <Button variant="secondary" size="sm" asChild>
+            <Link to={'/documents/' + doc.id}>Open record</Link>
+          </Button>
+        );
+      },
       cell: function (doc) {
         return (
           <Button variant="ghost" size="icon-sm" asChild>

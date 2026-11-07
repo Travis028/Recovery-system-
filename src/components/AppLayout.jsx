@@ -48,7 +48,7 @@ export default function AppLayout() {
       <Sidebar sections={sections} />
       <MobileNav open={menuOpen} onOpenChange={setMenuOpen} sections={sections} />
 
-      <div className="lg:pl-sidebar print:pl-0">
+      <div className="xl:pl-sidebar print:pl-0">
         <TopBar
           onOpenMenu={function () {
             setMenuOpen(true);
@@ -57,7 +57,7 @@ export default function AppLayout() {
           <UserMenu user={user} role={role} onSignOut={handleLogout} />
         </TopBar>
 
-        <main id="main-content" tabIndex={-1} className="mx-auto outline-none w-full max-w-content px-page-x pb-24 pt-page-y lg:pb-12 print:max-w-none print:p-0">
+        <main id="main-content" tabIndex={-1} className="mx-auto outline-none w-full max-w-content px-page-x pb-24 pt-page-y xl:pb-12 print:max-w-none print:p-0">
           <AccountNotices user={user} role={role} />
           <Outlet />
         </main>

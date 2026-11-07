@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Lock, ShieldCheck, Users as UsersIcon } from 'lucide-react';
+import { Lock, Power, ShieldCheck, ShieldOff, Unlock, Users as UsersIcon } from 'lucide-react';
+import RowActions from '@/components/data-table/RowActions';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import useResource from '@/hooks/useResource';
@@ -83,6 +84,16 @@ function UsersContent() {
               {account.id === me.id ? <span className="font-normal text-muted-foreground"> (you)</span> : null}
             </p>
             <p className="text-xs text-muted-foreground">{account.email}</p>
+            <p className="text-xs text-muted-foreground">
+              {account.phone ? (
+                <>
+                  <span className="font-mono">{maskPhone(account.phone)}</span>
+                  {account.phone_verified ? ' · verified' : ' · not verified'}
+                </>
+              ) : (
+                'No phone'
+              )}
+            </p>
           </div>
         );
       },
@@ -107,7 +118,7 @@ function UsersContent() {
               change(account, { pickup_point_id: value }, 'Station set to ' + pointName(value));
             }}
           >
-            <SelectTrigger className="h-8 min-w-[13rem] text-xs" aria-label={'Station for ' + account.full_name}>
+            <SelectTrigger className="h-8 w-48 text-xs" aria-label={'Station for ' + account.full_name}>
               <SelectValue placeholder="Assign a station" />
             </SelectTrigger>
             <SelectContent>
@@ -120,19 +131,6 @@ function UsersContent() {
               })}
             </SelectContent>
           </Select>
-        );
-      },
-    },
-    {
-      key: 'phone',
-      header: 'Phone',
-      cell: function (account) {
-        if (!account.phone) return <span className="text-muted-foreground">None</span>;
-        return (
-          <div className="whitespace-nowrap">
-            <span className="font-mono text-xs">{maskPhone(account.phone)}</span>
-            <p className="text-xs text-muted-foreground">{account.phone_verified ? 'Verified' : 'Not verified'}</p>
-          </div>
         );
       },
     },
@@ -165,7 +163,7 @@ function UsersContent() {
         if (account.id === me.id) return null;
         const role = resolveRole(account);
         return (
-          <div className="flex justify-end gap-1.5">
+          <div className="flex items-center justify-end gap-1.5">
             {role === 'Officer' && !account.approved ? (
               <Button
                 size="sm"
@@ -180,25 +178,21 @@ function UsersContent() {
                 Approve
               </Button>
             ) : null}
-            {role === 'Officer' && account.approved ? (
-              <Button size="sm" variant="secondary" onClick={function () { change(account, { approved: false }, 'Officer approval withdrawn'); }}>
-                Withdraw approval
-              </Button>
-            ) : null}
-            {isLocked(account) ? (
-              <Button size="sm" variant="secondary" onClick={function () { change(account, { locked_until: '', failed_logins: 0 }, 'Account unlocked'); }}>
-                Unlock
-              </Button>
-            ) : null}
-            <Button
-              size="sm"
-              variant={account.disabled ? 'secondary' : 'danger-outline'}
-              onClick={function () {
-                change(account, { disabled: !account.disabled }, account.disabled ? 'Account enabled' : 'Account disabled');
-              }}
-            >
-              {account.disabled ? 'Enable' : 'Disable'}
-            </Button>
+            <RowActions
+              label={'Actions for ' + account.full_name}
+              items={[
+                role === 'Officer' && account.approved
+                  ? { label: 'Withdraw approval', icon: ShieldOff, onSelect: function () { change(account, { approved: false }, 'Officer approval withdrawn'); } }
+                  : null,
+                isLocked(account) ? { label: 'Unlock', icon: Unlock, onSelect: function () { change(account, { locked_until: '', failed_logins: 0 }, 'Account unlocked'); } } : null,
+                {
+                  label: account.disabled ? 'Enable account' : 'Disable account',
+                  icon: Power,
+                  danger: !account.disabled,
+                  onSelect: function () { change(account, { disabled: !account.disabled }, account.disabled ? 'Account enabled' : 'Account disabled'); },
+                },
+              ].filter(Boolean)}
+            />
           </div>
         );
       },
