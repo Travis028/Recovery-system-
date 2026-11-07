@@ -3,28 +3,34 @@ import { ShieldAlert } from 'lucide-react';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import Loader from '@/components/Loader';
 import { Button } from '@/components/ui/button';
+import { ROLE_LABELS } from '@/lib/ldrs';
 
 /**
- * Hides a screen from roles that should not see it. This is only the screen side — the
- * same rules are enforced again in the data layer for every request.
+ * Shows a screen only to the roles allowed to open it. This is the screen side; the data
+ * layer checks the same rules again on every request.
  */
 export default function RoleGuard({ allow, children }) {
   const { user, role, loading } = useLdrsUser();
   if (loading && !user) return <Loader label="Checking access" />;
   if (!user) return null;
-  if (allow.indexOf(role) < 0) {
-    return (
-      <div className="mx-auto max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
-          <ShieldAlert className="h-6 w-6" />
+  if (allow.indexOf(role) >= 0) return children;
+
+  return (
+    <div className="flex justify-center py-16">
+      <div className="max-w-md text-center">
+        <p className="text-sm font-semibold text-warning-subtle-foreground">Error 403</p>
+        <span className="mx-auto mt-3 flex h-12 w-12 items-center justify-center rounded-full bg-warning-subtle text-warning-subtle-foreground">
+          <ShieldAlert className="h-6 w-6" aria-hidden="true" />
         </span>
-        <h1 className="mt-4 font-heading text-xl font-bold text-slate-900">This screen is not available for your role</h1>
-        <p className="mt-2 text-sm text-slate-500">The attempt has not been recorded as an error. Use the menu to reach the screens for your role.</p>
-        <Button className="mt-5 rounded-xl bg-blue-900 hover:bg-blue-950" asChild>
+        <h1 className="mt-4">This page is not available to your account</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {ROLE_LABELS[role] ? ROLE_LABELS[role] + ' accounts cannot open it.' : 'Your account cannot open it.'} The menu shows every page you
+          can use.
+        </p>
+        <Button className="mt-6" asChild>
           <Link to="/dashboard">Go to my dashboard</Link>
         </Button>
       </div>
-    );
-  }
-  return children;
+    </div>
+  );
 }
