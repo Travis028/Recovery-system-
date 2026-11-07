@@ -10,6 +10,7 @@
  * are enforced on every create and update.
  */
 import { randomId } from './crypto';
+import { checkRecord } from './recordChecks';
 
 const DB_KEY = 'ldrs.db.v1';
 const BACKUP_KEY = 'ldrs.backups.v1';
@@ -101,6 +102,8 @@ function validate(name, record, isCreate) {
       throw new ApiError(422, name + ': ' + field + ' is too long.');
     }
   });
+  const problem = checkRecord(name, record);
+  if (problem) throw new ApiError(422, problem);
 }
 
 function applyDefaults(name, record) {
