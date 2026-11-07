@@ -97,3 +97,12 @@ export function collectErrors(checks) {
   });
   return errors;
 }
+
+/** Office numbers may be landlines, so any 9 to 13 digits are accepted, with spaces or a leading +. */
+export function checkContactPhone(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  return /^\+?[\d\s-]+$/.test(raw) && raw.replace(/\D/g, '').length >= 9 && raw.replace(/\D/g, '').length <= 13
+    ? ''
+    : 'Enter a phone number with 9 to 13 digits, for example 057 202 3456.';
+}

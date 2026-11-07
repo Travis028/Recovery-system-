@@ -19,6 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { logAction, AUDIT_ACTIONS } from '@/lib/audit';
 import { useToast } from '@/components/ui/use-toast';
+import useFieldErrors from '@/hooks/useFieldErrors';
+import { checkContactPhone, checkMaxLength, checkRequired, collectErrors } from '@/lib/validation';
 
 const TYPES = ['Police station', "Chief's office", 'Other approved office'];
 const BLANK = { name: '', point_type: 'Police station', location: '', county: '', contact_phone: '', opening_hours: '', verification_note: '' };
@@ -71,6 +73,16 @@ export default function PickupPoints() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(BLANK);
   const [busy, setBusy] = useState(false);
+  const fields = useFieldErrors(
+    collectErrors({
+      pp_name: () => checkRequired(form.name, 'Enter the name of the station or office.') || checkMaxLength(form.name, 120, 'The name'),
+      pp_county: () => checkRequired(form.county, 'Enter the county.'),
+      pp_location: () => checkRequired(form.location, 'Enter where the point is, such as the street or landmark.'),
+      pp_hours: () => checkMaxLength(form.opening_hours, 80, 'Opening hours'),
+      pp_phone: () => checkContactPhone(form.contact_phone),
+      pp_note: () => checkMaxLength(form.verification_note, 500, 'The note'),
+    }),
+  );
 
   const { data: points, loading, error, reload } = useResource(
     function () {
@@ -82,6 +94,7 @@ export default function PickupPoints() {
   const open = function (point) {
     setEditing(point || 'new');
     setForm(point ? { ...BLANK, ...point } : BLANK);
+    fields.reset();
   };
 
   const setField = function (field, value) {
@@ -92,6 +105,7 @@ export default function PickupPoints() {
 
   const save = async function (event) {
     event.preventDefault();
+    if (!fields.submit()) return;
     setBusy(true);
     try {
       const data = {
@@ -263,8 +277,8 @@ export default function PickupPoints() {
             <DialogDescription>New points stay unverified until you confirm them with the station, for example by calling the officer in charge.</DialogDescription>
           </DialogHeader>
           <form className="grid gap-4 sm:grid-cols-2" onSubmit={save} noValidate>
-            <FormField id="pp_name" label="Name" className="sm:col-span-2">
-              <Input value={form.name} onChange={function (e) { setField('name', e.target.value); }} />
+            <FormField error={fields.show('pp_name')} id="pp_name" label="Name" className="sm:col-span-2">
+              <Input value={form.name} onBlur={fields.touch('pp_name')} onChange={function (e) { setField('name', e.target.value); }} />
             </FormField>
             <FormField id="pp_type" label="Type">
               <Select value={form.point_type} onValueChange={function (value) { setField('point_type', value); }}>
@@ -282,26 +296,26 @@ export default function PickupPoints() {
                 </SelectContent>
               </Select>
             </FormField>
-            <FormField id="pp_county" label="County">
-              <Input value={form.county} onChange={function (e) { setField('county', e.target.value); }} />
+            <FormField error={fields.show('pp_county')} id="pp_county" label="County">
+              <Input value={form.county} onBlur={fields.touch('pp_county')} onChange={function (e) { setField('county', e.target.value); }} />
             </FormField>
-            <FormField id="pp_location" label="Location" className="sm:col-span-2">
-              <Input value={form.location} onChange={function (e) { setField('location', e.target.value); }} />
+            <FormField error={fields.show('pp_location')} id="pp_location" label="Location" className="sm:col-span-2">
+              <Input value={form.location} onBlur={fields.touch('pp_location')} onChange={function (e) { setField('location', e.target.value); }} />
             </FormField>
-            <FormField id="pp_hours" label="Opening hours" optional>
+            <FormField id="pp_hours" label="Opening hours" optional error={fields.show('pp_hours')}>
               <Input value={form.opening_hours} placeholder="Mon–Fri, 08:00–17:00" onChange={function (e) { setField('opening_hours', e.target.value); }} />
             </FormField>
-            <FormField id="pp_phone" label="Contact phone" optional>
-              <Input value={form.contact_phone} inputMode="tel" onChange={function (e) { setField('contact_phone', e.target.value); }} />
+            <FormField id="pp_phone" label="Contact phone" optional error={fields.show('pp_phone')}>
+              <Input value={form.contact_phone} inputMode="tel" onBlur={fields.touch('pp_phone')} onChange={function (e) { setField('contact_phone', e.target.value); }} />
             </FormField>
-            <FormField id="pp_note" label="Verification note" hint="Who confirmed this point, and how." optional className="sm:col-span-2">
+            <FormField id="pp_note" label="Verification note" hint="Who confirmed this point, and how." optional error={fields.show('pp_note')} className="sm:col-span-2">
               <Textarea rows={2} value={form.verification_note} onChange={function (e) { setField('verification_note', e.target.value); }} />
             </FormField>
             <DialogFooter className="sm:col-span-2">
               <Button type="button" variant="secondary" onClick={function () { setEditing(null); }}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={busy || !form.name || !form.location || !form.county}>
+              <Button type="submit" disabled={busy}>
                 {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
                 Save
               </Button>
