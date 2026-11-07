@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom';
-import { ShieldCheck, LogOut, Menu, X } from 'lucide-react';
+import { NavLink, Navigate, Outlet } from 'react-router-dom';
+import { LogOut, Menu, X } from 'lucide-react';
+import Brand from '@/components/layout/Brand';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import { navForRole } from '@/lib/nav';
@@ -39,7 +40,6 @@ function NavItems({ items, onNavigate }) {
 
 export default function AppLayout() {
   const { user, role, loading } = useLdrsUser();
-  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   useIdleLogout(Boolean(user));
@@ -58,22 +58,10 @@ export default function AppLayout() {
     await base44.auth.logout('/login');
   };
 
-  const Brand = (
-    <Link to="/dashboard" className="flex items-center gap-3">
-      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-900 to-violet-700 text-white shadow-sm">
-        <ShieldCheck className="h-6 w-6" />
-      </span>
-      <span>
-        <span className="block font-heading text-lg font-bold leading-tight text-slate-900">LDRS</span>
-        <span className="block text-xs text-slate-500">Document Recovery</span>
-      </span>
-    </Link>
-  );
-
   return (
     <div className="min-h-screen bg-slate-50">
       <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-slate-200 bg-white px-5 py-6 lg:flex print:hidden">
-        {Brand}
+        <Brand />
         <div className="mt-6 rounded-2xl bg-gradient-to-br from-blue-50 to-violet-50 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">{roleLabel}</p>
           <p className="mt-1 truncate text-sm font-medium text-slate-700">{displayName}</p>
@@ -93,7 +81,7 @@ export default function AppLayout() {
 
       <div className="lg:pl-72 print:pl-0">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:px-8 print:hidden">
-          <div className="lg:hidden">{Brand}</div>
+          <div className="lg:hidden"><Brand /></div>
           <div className="hidden lg:block">
             <p className="text-sm font-medium text-slate-500">Lost Documents Recovery System</p>
           </div>
