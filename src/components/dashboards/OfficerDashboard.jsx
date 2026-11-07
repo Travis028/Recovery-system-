@@ -54,14 +54,15 @@ export default function OfficerDashboard({ user }) {
   if (error) return <ErrorState title="The station dashboard could not be loaded" error={error} onRetry={reload} />;
 
   const [docs, pending, awaiting, claims, point] = data;
+  // Unclaimed documents are waiting to go to the registration authority, not to an owner.
   const held = docs.filter(function (doc) {
-    return doc.status !== 'Returned';
+    return doc.status !== 'Returned' && doc.status !== 'Unclaimed';
   });
   const unclaimed = docs.filter(function (doc) {
     return doc.status === 'Unclaimed';
   });
-  const flagged = held.filter(function (doc) {
-    return doc.duplicate_flag;
+  const flagged = docs.filter(function (doc) {
+    return doc.status !== 'Returned' && doc.duplicate_flag;
   });
 
   return (
