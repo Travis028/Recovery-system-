@@ -40,7 +40,7 @@ function pickNumber(text, words, type) {
 function pickName(lines) {
   let best = null;
   lines.forEach(function (line) {
-    const text = String(line.text || '').replace(/[^A-Za-z' \-]/g, ' ').replace(/\s+/g, ' ').trim();
+    const text = String(line.text || '').replace(/[^A-Za-z' -]/g, ' ').replace(/\s+/g, ' ').trim();
     const upper = text.toUpperCase();
     const parts = upper.split(' ').filter(function (part) {
       return part.length > 1;
