@@ -12,7 +12,10 @@ import { approveClaim, rejectClaim } from '@/lib/claims';
 import { sendOwnerNotification, foundDocumentAlert } from '@/lib/notifications';
 import { logAction, AUDIT_ACTIONS } from '@/lib/audit';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertTriangle, ClipboardCheck, ShieldCheck } from 'lucide-react';
+import { ClipboardCheck, ShieldCheck } from 'lucide-react';
+import ErrorState from '@/components/ErrorState';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function MatchReviewContent() {
   const { user, role } = useLdrsUser();
@@ -26,11 +29,11 @@ function MatchReviewContent() {
   const [reportsById, setReportsById] = useState({});
   const [pointsById, setPointsById] = useState({});
   const [busyId, setBusyId] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   const load = async function () {
     setLoading(true);
-    setError('');
+    setError(null);
     try {
       const stationScoped = role === 'Officer' && user.pickup_point_id;
       let documentIds = null;
@@ -108,7 +111,7 @@ function MatchReviewContent() {
       setPointsById(pointMap);
     } catch (loadError) {
       console.error('Matches could not be loaded', loadError);
-      setError('Matches could not be loaded. Please try again.');
+      setError(loadError);
     } finally {
       setLoading(false);
     }
@@ -129,10 +132,10 @@ function MatchReviewContent() {
       const point = doc ? pointsById[doc.pickup_point_id] : null;
       await confirmMatch({ match, document: doc, report, pickupPoint: point, actor: user });
       await load();
-      toast({ title: 'Match confirmed', description: 'The owner has been alerted with the pickup point and reference code.' });
+      toast({ tone: 'success', title: 'Match confirmed', description: 'The owner has been alerted with the pickup point and reference code.' });
     } catch (confirmError) {
       console.error('Match could not be confirmed', confirmError);
-      toast({ title: 'Could not confirm the match', description: 'Please try again.', variant: 'destructive' });
+      toast({ tone: 'danger', title: 'Could not confirm the match', description: confirmError.message });
     } finally {
       setBusyId(null);
     }
@@ -151,10 +154,10 @@ function MatchReviewContent() {
         otherActiveMatches: others.length > 0,
       });
       await load();
-      toast({ title: 'Match rejected', description: 'The document stays available for other reports.' });
+      toast({ tone: 'success', title: 'Match rejected', description: 'The document stays available for other reports.' });
     } catch (rejectError) {
       console.error('Match could not be rejected', rejectError);
-      toast({ title: 'Could not reject the match', description: 'Please try again.', variant: 'destructive' });
+      toast({ tone: 'danger', title: 'Could not reject the match', description: rejectError.message });
     } finally {
       setBusyId(null);
     }
@@ -171,10 +174,10 @@ function MatchReviewContent() {
         actor: user,
       });
       await load();
-      toast({ title: 'Claim approved', description: 'The owner received the pick-up point and reference code.' });
+      toast({ tone: 'success', title: 'Claim approved', description: 'The owner received the pick-up point and reference code.' });
     } catch (claimError) {
       console.error('Claim could not be approved', claimError);
-      toast({ title: 'Could not approve the claim', description: 'Please try again.', variant: 'destructive' });
+      toast({ tone: 'danger', title: 'Could not approve the claim', description: claimError.message });
     } finally {
       setBusyId(null);
     }
@@ -185,10 +188,10 @@ function MatchReviewContent() {
     try {
       await rejectClaim({ claim, document: claimDocsById[claim.document_id] || null, actor: user });
       await load();
-      toast({ title: 'Claim rejected', description: 'The owner was told to bring proof of ownership.' });
+      toast({ tone: 'success', title: 'Claim rejected', description: 'The owner was told to bring proof of ownership.' });
     } catch (claimError) {
       console.error('Claim could not be rejected', claimError);
-      toast({ title: 'Could not reject the claim', description: 'Please try again.', variant: 'destructive' });
+      toast({ tone: 'danger', title: 'Could not reject the claim', description: claimError.message });
     } finally {
       setBusyId(null);
     }
@@ -214,125 +217,93 @@ function MatchReviewContent() {
         details: 'Collection reminder sent for match ' + match.id,
         user,
       });
-      toast({ title: 'Notification sent', description: 'The owner received the pickup point and reference code again.' });
+      toast({ tone: 'success', title: 'Notification sent', description: 'The owner received the pickup point and reference code again.' });
     } catch (notifyError) {
       console.error('Notification could not be sent', notifyError);
-      toast({ title: 'Could not send the notification', description: 'Please try again.', variant: 'destructive' });
+      toast({ tone: 'danger', title: 'Could not send the reminder', description: notifyError.message });
     } finally {
       setBusyId(null);
     }
   };
 
   if (loading) return <Loader label="Loading matches" />;
+  if (error) return <ErrorState title="Matches could not be loaded" error={error} onRetry={load} />;
+
+  const pointNameFor = function (match) {
+    const doc = documentsById[match.document_id];
+    return doc && pointsById[doc.pickup_point_id] ? pointsById[doc.pickup_point_id].name : '';
+  };
+
+  const renderMatches = function (list) {
+    return list.map(function (match) {
+      return (
+        <MatchCard
+          key={match.id}
+          match={match}
+          document={documentsById[match.document_id]}
+          report={reportsById[match.loss_report_id]}
+          pickupPointName={pointNameFor(match)}
+          canReview
+          busy={busyId === match.id}
+          onConfirm={handleConfirm}
+          onReject={handleReject}
+          onNotify={handleNotify}
+        />
+      );
+    });
+  };
+
+  const defaultTab = pendingClaims.length ? 'claims' : pending.length ? 'pending' : 'confirmed';
 
   return (
-    <div className="space-y-8">
-      {role === 'Officer' && !user.approved ? (
-        <div className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-          <p className="text-sm text-amber-900">
-            Your officer account is still pending approval. Matches can only be confirmed after an administrator approves
-            your account.
-          </p>
-        </div>
-      ) : null}
+    <Tabs defaultValue={defaultTab}>
+      <TabsList aria-label="Review queues">
+        <TabsTrigger value="claims">
+          Ownership claims <Badge tone={pendingClaims.length ? 'warning' : 'neutral'}>{pendingClaims.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="pending">
+          Possible matches <Badge tone={pending.length ? 'warning' : 'neutral'}>{pending.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="confirmed">
+          Confirmed <Badge tone="neutral">{confirmed.length}</Badge>
+        </TabsTrigger>
+      </TabsList>
 
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-
-      <section>
-        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Ownership claims to verify</h2>
+      <TabsContent value="claims" className="space-y-3">
         {pendingClaims.length ? (
-          <div className="space-y-3">
-            {pendingClaims.map(function (claim) {
-              return (
-                <ClaimCard
-                  key={claim.id}
-                  claim={claim}
-                  document={claimDocsById[claim.document_id]}
-                  busy={busyId === 'claim-' + claim.id}
-                  onApprove={handleApproveClaim}
-                  onReject={handleRejectClaim}
-                />
-              );
-            })}
-          </div>
+          pendingClaims.map(function (claim) {
+            return (
+              <ClaimCard
+                key={claim.id}
+                claim={claim}
+                document={claimDocsById[claim.document_id]}
+                busy={busyId === 'claim-' + claim.id}
+                onApprove={handleApproveClaim}
+                onReject={handleRejectClaim}
+              />
+            );
+          })
         ) : (
-          <EmptyState
-            icon={ClipboardCheck}
-            title="No claims waiting"
-            description="Claims owners submit from their dashboard appear here for verification."
-          />
+          <EmptyState icon={ClipboardCheck} title="No claims waiting" description="Claims that owners send from the search screen appear here for checking." />
         )}
-      </section>
+      </TabsContent>
 
-      <section>
-        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Possible matches to review</h2>
+      <TabsContent value="pending" className="space-y-3">
         {pending.length ? (
-          <div className="space-y-3">
-            {pending.map(function (match) {
-              return (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  document={documentsById[match.document_id]}
-                  report={reportsById[match.loss_report_id]}
-                  pickupPointName={
-                    documentsById[match.document_id] && pointsById[documentsById[match.document_id].pickup_point_id]
-                      ? pointsById[documentsById[match.document_id].pickup_point_id].name
-                      : ''
-                  }
-                  canReview
-                  busy={busyId === match.id}
-                  onConfirm={handleConfirm}
-                  onReject={handleReject}
-                  onNotify={handleNotify}
-                />
-              );
-            })}
-          </div>
+          renderMatches(pending)
         ) : (
-          <EmptyState
-            icon={ClipboardCheck}
-            title="No pending matches"
-            description="Fuzzy matches waiting for a decision will appear here."
-          />
+          <EmptyState icon={ClipboardCheck} title="No possible matches" description="Matches found by name, which need an officer's decision, appear here." />
         )}
-      </section>
+      </TabsContent>
 
-      <section>
-        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Confirmed matches</h2>
+      <TabsContent value="confirmed" className="space-y-3">
         {confirmed.length ? (
-          <div className="space-y-3">
-            {confirmed.map(function (match) {
-              return (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  document={documentsById[match.document_id]}
-                  report={reportsById[match.loss_report_id]}
-                  pickupPointName={
-                    documentsById[match.document_id] && pointsById[documentsById[match.document_id].pickup_point_id]
-                      ? pointsById[documentsById[match.document_id].pickup_point_id].name
-                      : ''
-                  }
-                  canReview
-                  busy={busyId === match.id}
-                  onConfirm={handleConfirm}
-                  onReject={handleReject}
-                  onNotify={handleNotify}
-                />
-              );
-            })}
-          </div>
+          renderMatches(confirmed)
         ) : (
-          <EmptyState
-            icon={ShieldCheck}
-            title="No confirmed matches yet"
-            description="Confirmed matches are ready for the owner to collect."
-          />
+          <EmptyState icon={ShieldCheck} title="No confirmed matches" description="Confirmed matches are ready for the owner to collect." />
         )}
-      </section>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -341,7 +312,7 @@ export default function MatchReview() {
     <RoleGuard allow={['Officer', 'Admin']}>
       <PageHeader
         title="Match review"
-        description="Confirm or reject possible matches. Exact number matches are confirmed automatically."
+        description="Check ownership claims and possible matches. Matches on the exact number are confirmed automatically."
       />
       <MatchReviewContent />
     </RoleGuard>
