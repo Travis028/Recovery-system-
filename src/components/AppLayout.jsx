@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import useIdleLogout from '@/hooks/useIdleLogout';
@@ -14,8 +14,17 @@ import Loader from '@/components/Loader';
 export default function AppLayout() {
   const { user, role, loading } = useLdrsUser();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { pathname } = useLocation();
 
   useIdleLogout(Boolean(user));
+
+  // Back/forward and links inside pages also change the route; the drawer should not stay open.
+  useEffect(
+    function () {
+      setMenuOpen(false);
+    },
+    [pathname],
+  );
 
   if (loading) return <Loader label="Opening LDRS" />;
   if (!user) return <Navigate to="/login" replace />;
