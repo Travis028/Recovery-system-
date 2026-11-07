@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser, { sessionHasEnded } from '@/hooks/useLdrsUser';
@@ -59,7 +59,10 @@ export default function AppLayout() {
 
         <main id="main-content" tabIndex={-1} className="mx-auto outline-none w-full max-w-content px-page-x pb-24 pt-page-y xl:pb-12 print:max-w-none print:p-0">
           <AccountNotices user={user} role={role} />
-          <Outlet />
+          {/* Keeps the menu on screen while the next page's code loads. */}
+          <Suspense fallback={<Loader label="Opening the page" />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 
