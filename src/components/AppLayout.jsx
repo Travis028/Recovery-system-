@@ -15,7 +15,8 @@ import Loader from '@/components/Loader';
 export default function AppLayout() {
   const { user, role, loading } = useLdrsUser();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
 
   useIdleLogout(Boolean(user));
 
@@ -28,7 +29,7 @@ export default function AppLayout() {
   );
 
   if (loading) return <Loader label="Opening LDRS" />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
 
   const sections = navSectionsForRole(role);
 

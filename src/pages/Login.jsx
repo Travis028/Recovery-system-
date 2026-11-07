@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { KeyRound, Loader2, LockKeyhole, UserPlus } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { reloadLdrsUser } from '@/hooks/useLdrsUser';
@@ -55,6 +55,10 @@ function LinkButton({ onClick, children, className }) {
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Where the visitor was going before being sent here; only paths inside the app are followed.
+  const requested = location.state && location.state.from;
+  const destination = typeof requested === 'string' && requested.charAt(0) === '/' && requested.indexOf('//') !== 0 ? requested : '/dashboard';
   const [mode, setMode] = useState('login'); // login | two_step | register | forgot | reset
   const [signedIn, setSignedIn] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -100,7 +104,7 @@ export default function Login() {
       .catch(function () {});
   }, []);
 
-  if (signedIn) return <Navigate to="/dashboard" replace />;
+  if (signedIn) return <Navigate to={destination} replace />;
 
   const go = function (next) {
     setMode(next);
@@ -114,7 +118,7 @@ export default function Login() {
 
   const finish = async function () {
     await reloadLdrsUser();
-    navigate('/dashboard', { replace: true });
+    navigate(destination, { replace: true });
   };
 
   const run = async function (fn) {
