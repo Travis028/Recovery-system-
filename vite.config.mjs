@@ -49,5 +49,18 @@ export default defineConfig({
     alias: { '@': path.join(root, 'src') },
   },
   server: { port: 5173, host: true },
-  build: { outDir: 'dist', sourcemap: false, chunkSizeWarningLimit: 1200 },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Libraries change less often than the app, so they get their own long-cached files.
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          radix: ['@radix-ui/react-checkbox', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-slot', '@radix-ui/react-tabs'],
+          utils: ['date-fns', 'clsx', 'tailwind-merge', 'class-variance-authority'],
+        },
+      },
+    },
+  },
 });
