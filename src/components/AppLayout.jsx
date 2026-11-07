@@ -8,6 +8,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import MobileNav from '@/components/layout/MobileNav';
 import TopBar from '@/components/layout/TopBar';
 import UserMenu from '@/components/layout/UserMenu';
+import AccountNotices from '@/components/layout/AccountNotices';
 import DemoPhone from '@/components/security/DemoPhone';
 import Loader from '@/components/Loader';
 
@@ -56,12 +57,7 @@ export default function AppLayout() {
         </TopBar>
 
         <main id="main-content" tabIndex={-1} className="mx-auto outline-none w-full max-w-content px-page-x pb-24 pt-page-y lg:pb-12 print:max-w-none print:p-0">
-          {role === 'Officer' && !user.approved ? (
-            <p className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 print:hidden">
-              Your officer account is waiting for approval by an administrator. You can look around, but you cannot register,
-              confirm or release documents until it is approved.
-            </p>
-          ) : null}
+          <AccountNotices user={user} role={role} />
           <Outlet />
         </main>
       </div>
