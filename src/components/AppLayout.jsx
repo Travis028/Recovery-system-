@@ -13,7 +13,7 @@ import Loader from '@/components/Loader';
 import useIdleLogout from '@/hooks/useIdleLogout';
 import { cn } from '@/lib/utils';
 import TopBar from '@/components/layout/TopBar';
-import { Badge } from '@/components/ui/badge';
+import UserMenu from '@/components/layout/UserMenu';
 
 function NavItems({ items, onNavigate }) {
   return (
@@ -65,15 +65,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar
-        sections={sections}
-        footer={
-          <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground" onClick={handleLogout}>
-            <LogOut aria-hidden="true" />
-            Sign out
-          </Button>
-        }
-      />
+      <Sidebar sections={sections} />
 
       <div className="lg:pl-sidebar print:pl-0">
         <TopBar
@@ -81,9 +73,7 @@ export default function AppLayout() {
             setMenuOpen(true);
           }}
         >
-          <span className="ml-1 hidden sm:inline-flex">
-            <Badge tone="primary">{roleLabel}</Badge>
-          </span>
+          <UserMenu user={user} role={role} onSignOut={handleLogout} />
         </TopBar>
 
         <main className="mx-auto w-full max-w-content px-page-x pb-28 pt-page-y lg:pb-12 print:max-w-none print:p-0">
