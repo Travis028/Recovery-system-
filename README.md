@@ -1,118 +1,166 @@
-# LDRS · Lost Documents Recovery System (Project 65)
+# LDRS · Lost Documents Recovery System
 
-A working web app built from the LDRS project folder and the guide *"LDRS – Functionalities,
-Cybersecurity and What to Add"*. The original folder layout is kept (`Components/`, `entities/`,
-`hooks/`, `lib/`, `pages/`, `index.css`, `tailwind.config.js`); the `.txt` exports were converted to
-runnable `.jsx` / `.json` files, and the pieces the export referenced but did not include were added.
+LDRS helps people in Kenya get lost identity documents back. Finders and officers register IDs,
+passports and certificates handed in at police stations or chief's offices; owners report a loss or
+search the register; the system matches the two and alerts the owner; an officer releases the
+document only after checking identity with a one-time collection code.
 
-> **Prototype.** Everything runs in the browser. The security rules are real code and are enforced
-> in the data layer, but browser storage is not a server. See **Moving to production** before any
-> real use. Use mock documents only — never real people's documents without their consent.
+> **Prototype.** The whole system, including the part that plays the server, runs in the browser
+> (see [How it is built](#how-it-is-built)). The security rules are real code and are enforced in
+> the data layer, but browser storage is not a server. Use mock documents only, never real people's
+> documents without their consent.
 
 ---
 
-## 1. Run it
+## Quick start
 
-Requirements: Node.js 18 or newer.
+Requirements: **Node.js 18 or newer** and npm.
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-# or
-npm run build && npm run preview   # production build on http://localhost:4173
+npm run dev          # http://localhost:5173
 ```
 
-### Demo accounts (mock data)
+Production build:
+
+```bash
+npm run build        # writes dist/
+npm run preview      # serves dist/ on http://localhost:4173
+```
+
+The first visit creates the demo data. To start again from scratch, clear the site's storage in the
+browser (DevTools → Application → Clear site data).
+
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server with hot reload |
+| `npm run build` | Production build in `dist/`, with the Content Security Policy added to `index.html` |
+| `npm run preview` | Serves the production build locally |
+| `npm run lint` | ESLint over `src/` (React and hooks rules) |
+| `npm test` | Unit tests with Vitest |
+| `npm run check:contrast` | Checks WCAG AA contrast of the colour tokens in light and dark mode |
+
+## Environment variables
+
+Copy `.env.example` to `.env` and adjust. All variables are optional.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `VITE_SMS_GATEWAY_URL` | empty | An endpoint on **your** server that forwards SMS to Africa's Talking. Keep the API key on that server. When empty, messages appear in the in-app *Demo SMS* phone. |
+| `VITE_SHOW_DEMO_ACCOUNTS` | `true` | Set to `false` to hide the demo account shortcuts on the sign-in page. |
+
+Vite only exposes variables that start with `VITE_`, and they end up in the browser bundle, so
+never put secrets in them.
+
+## Demo accounts
+
+All data is invented.
 
 | Role | Email | Password | Notes |
 |---|---|---|---|
-| Administrator | admin@ldrs.test | Admin@LDRS2026 | two-step login |
-| Officer – Kisumu Central | officer.kisumu@ldrs.test | Officer@LDRS2026 | two-step login |
-| Officer – Kondele | officer.kondele@ldrs.test | Officer@LDRS2026 | two-step login |
+| Administrator | admin@ldrs.test | Admin@LDRS2026 | two-step sign-in |
+| Officer, Kisumu Central | officer.kisumu@ldrs.test | Officer@LDRS2026 | two-step sign-in |
+| Officer, Kondele | officer.kondele@ldrs.test | Officer@LDRS2026 | two-step sign-in |
 | Finder | finder@ldrs.test | Finder@LDRS2026 | |
 | Owner | owner@ldrs.test | Owner@LDRS2026 | phone already verified |
 
-SMS messages (login codes, phone checks, collection codes, alerts) appear in the **Demo SMS** phone
-at the bottom right. To start again from scratch, clear the site's storage in the browser.
+Sign-in codes, phone codes and collection codes arrive in the **Demo SMS** phone at the bottom left.
 
-### Suggested walk-through
+### A five-minute walk-through
 
-1. Sign in as the **Kisumu officer** → *Match review* → confirm the pending match for Mary Wanjiru Kamau.
-2. *Start handover* → generate the code → read it from the Demo SMS phone → enter the reference code,
-   ID number `28456713`, claimant details → approve → printable receipt with QR code.
-3. Sign in as the **finder** → *Register found document* → upload a JPG/PNG → try OCR → register.
-   Register the same document again to see duplicate detection.
-4. Sign in as the **owner** → *Search* (CAPTCHA appears after 3 searches) and *Report a lost document*.
-5. Sign in as the **admin** → *Audit trail* → *Verify chain*; *Users*; *Backups and data protection*.
+1. **Officer (Kisumu)** → *Match review* → *Possible matches* → confirm the match for Mary Wanjiru Kamau.
+2. *Confirmed* → *Start handover* → *Create six-digit code* → read it in the Demo SMS phone → enter the
+   reference code, ID number `28456713`, the code and the collector's details → *Approve release* →
+   print the receipt and scan its QR code.
+3. **Finder** → *Register found document* → upload a JPG or PNG → try *Read name and number* →
+   register. Register the same document again to see duplicate detection.
+4. **Owner** → *Search found documents* (a check question appears after three searches), *Report a
+   lost document*, and *This is mine* to send a claim.
+5. **Admin** → *Audit trail* → *Verify chain*; *Users and roles*; *Backups and data protection*.
 
----
+## Features by role
 
-## 2. Folder layout
-
-| Folder / file | Contents |
+| Role | Screens |
 |---|---|
-| `api/` | **New.** Local stand-in for the Base44 SDK the code was written for: data store, access rules, auth, encrypted file store, audit store, server functions, demo seed data |
-| `Components/` | Original components (`AppLayout`, `StatusBadge`, `claims/`, `owner/`, `documents/`, `dashboards/`) plus the missing ones (`ui/`, `matches/`, `security/`, Loader, PageHeader, EmptyState, StatCard, RoleGuard, PrivateImage, DocumentRow, other dashboards) |
-| `entities/` | Entity schemas as JSON (validated on every create/update). Added: Match, Notification, PickupPoint, User, DataRequest, Setting |
-| `hooks/` | `useLdrsUser` (now shared across screens), `useIdleLogout` (15-minute auto logout) |
-| `lib/` | Original `ldrs`, `matching`, `claims`, `notifications`, `sms`, `audit` + new `image`, `ocr`, `validation`, `nav`, `utils` |
-| `pages/` | Original 5 pages + Login, Dashboard, ReportFound, DocumentDetail, ReportLost, SearchDocuments, HandoverList, PickupPoints, Statistics, AuditTrail, Users, SystemSettings, MyData, VerifyReceipt, NotFound |
-| `deploy/nginx.conf` | Example HTTPS server with security headers |
-| `public/_redirects` | SPA routing for Netlify-style hosts |
+| Owner | Dashboard with collection code, report a lost document, masked search, claims, alerts, pickup points, my data and privacy |
+| Finder | Dashboard, register a found document (photo, OCR), my documents, pickup points, my data |
+| Officer | Station dashboard, documents, match and claim review, secure handover, receipts, statistics |
+| Admin | Everything above across all stations, plus users and roles, pickup point management, audit trail, backups, retention and data protection requests |
 
----
+## Interface
 
-## 3. The twelve functions and their security (as built)
+- **Design tokens** in `src/styles/tokens.css`: neutral surfaces, one primary colour (teal), one
+  accent (violet), four status colours, a type scale, spacing, radii and shadows, all CSS
+  variables. Tailwind maps its colour names to them in `tailwind.config.js`, so components never
+  use raw colours.
+- **Light and dark mode** from the toggle in the top bar. The first visit follows the device
+  setting; a choice is saved in `localStorage` under `ldrs.theme`. A small inline script in
+  `index.html` applies the theme before the first paint, so a reload never flashes white. Printed
+  receipts always use the light colours.
+- **Layout**: sidebar from 1280 px, a drawer menu below that, a top bar with the page name, theme
+  toggle and account menu, breadcrumbs on record pages.
+- **Tables** sort, search and page; below 768 px rows turn into stacked cards.
+- **Forms** show the reason under each field after it is left or when the form is sent, and move
+  focus to the first problem. Results and failures appear as toasts or alerts.
+- **Accessibility**: skip link, visible focus rings, labelled controls, `aria-sort` on tables,
+  live regions for toasts and errors, reduced-motion support, and contrast checked by
+  `npm run check:contrast`.
 
-| # | Function | What was implemented | Where |
-|---|---|---|---|
-| 1 | Found-document upload | JPG/PNG only, checked by file signature (not the name); 5 MB limit; photo redrawn to strip hidden data (GPS, phone model); stored AES-256-GCM encrypted with a non-extractable key; shown only to the uploader, the holding station and admins | `lib/image.js`, `api/fileStore.js`, `Components/documents/PhotoUpload.jsx`, `pages/ReportFound.jsx` |
-| 2 | OCR extraction | Tesseract (tesseract.js) after grey-scale/contrast clean-up; number format checks per type (e.g. 7–8 digits for an ID); low-confidence fields highlighted and must be confirmed; temporary image discarded | `lib/ocr.js`, `lib/validation.js` |
-| 3 | Owner search | Login + verified phone required; masked results; limit per user per hour; CAPTCHA after a few searches; every search logged | `api/functions.js` → `searchFoundDocuments`, `pages/SearchDocuments.jsx` |
-| 4 | Automatic matching | Phone verified by SMS code before a loss report is accepted; limit of open reports per phone; exact number → confirmed; similar name → officer review; owners never see pending matches | `submitLossReport`, `lib/matching.js` |
-| 5 | SMS notification | One sender name (`LDRS-KE`); masked number only, never the full name/ID; warning not to share codes; 3 retries with recorded delivery status; English or Kiswahili per owner | `lib/sms.js`, `lib/notifications.js`, `notifyOwner` |
-| 6 | Pickup point management | Admin-only add/edit; new points unverified until confirmed with the station; every change logged; hours and contact shown; fake-point warning for the public | `pages/PickupPoints.jsx` |
-| 7 | Identity verification at handover | 6-digit code, expires in 5 minutes, 3 attempts then locked; the officer never sees the code; officer confirms the physical ID; claimant ID type recorded | `generateCollectionCode`, `completeHandover`, `pages/SecureHandover.jsx` |
-| 8 | Handover record | Single atomic step so a document cannot be released twice; record read-only after saving; receipt with QR code that opens a public verification page; automatic daily backup | `completeHandover`, `pages/HandoverReceipt.jsx`, `pages/VerifyReceipt.jsx`, `api/db.js` |
-| 9 | Duplicate detection | Same type + number; identical photo (SHA-256); near-identical photo (perceptual hash); finder uploading many documents in an hour; officer sees the reasons | `registerFoundDocument`, `pages/DocumentDetail.jsx` |
-| 10 | Station dashboard | Officers see only their own station (enforced in the data layer); auto logout after 15 minutes; numbers hidden in lists until a record is opened (opening is logged); two-step login for officers | `api/permissions.js`, `Components/dashboards/OfficerDashboard.jsx` |
-| 11 | Statistics | Totals only; officers see their station, admins all; anonymised CSV export, admin-only and logged | `statistics`, `exportAnonymised`, `pages/Statistics.jsx` |
-| 12 | Audit trail | Append-only, kept in separate storage; each entry linked to the previous by SHA-256 so tampering is detected; security alerts (failed logins, locked accounts, wrong codes, rate limits, rapid uploads); retention period | `api/auditStore.js`, `pages/AuditTrail.jsx` |
-| + | Login and roles | PBKDF2-SHA256 hashed passwords (310 000 iterations); password rules; two-step login for officers/admins; lock after 5 failures; forgot-password by SMS code; officers need admin approval; role checked on every request | `api/base44Client.js`, `api/permissions.js`, `pages/Login.jsx`, `pages/Users.jsx` |
+## Project structure
 
-### Kenya Data Protection Act, 2019
+```
+src/
+  api/            The "server": data store, access rules, auth, server functions, audit log, file store
+  components/
+    data-table/   DataTable, pagination, row actions
+    layout/       Sidebar, top bar, drawer, user menu, account notices
+    ui/           Buttons, inputs, select, dialog, badge, alert, card, tabs, toasts and other primitives
+    ...           Feature components (dashboards, matches, claims, owner, security, documents)
+  entities/       JSON schemas, checked on every create and update
+  hooks/          useLdrsUser, useResource, useFieldErrors, useIdleLogout
+  lib/            Domain helpers: masking, matching, validation, OCR, images, SMS, CSV, navigation
+  pages/          One file per route, loaded on demand
+  styles/         Design tokens
+  theme/          Theme provider and toggle
+docs/             Audit, setup and deployment guide, testing checklist
+scripts/          Contrast checker
+deploy/           Example Nginx configuration
+```
 
-Consent boxes on registration and loss reports; minimum data collected; owner page to view,
-download, correct or request removal of their data (admin handles requests); configurable retention
-for unclaimed documents and audit logs with a retention job; checklist (ODPC registration, 72-hour
-breach reporting, DPIA) on the admin *Backups and data protection* page.
+## How it is built
 
-### Changes to the original code worth knowing
+React 18, React Router 6, Vite 5, Tailwind CSS 3 with Radix UI primitives, lucide-react icons,
+date-fns, qrcode and tesseract.js.
 
-- **Handover:** the original showed the collection code to the officer and checked it in the browser,
-  which defeats the check. The code is now visible only to the owner, verified server-side against a
-  hash, and limited to 3 attempts (was 5) as the guide requires.
-- **Lists:** document numbers are now hidden in lists for every role, not only owners.
-- **Owner claims:** the claim dialog no longer downloads every held document; it uses the masked,
-  rate-limited search.
-- **Loss reports and found documents** are submitted through server functions so the checks cannot
-  be skipped from the screen.
+There is no separate backend. `src/api/` plays that part inside the browser:
 
----
-
-## 4. What is simulated, and moving to production
-
-| Prototype | Production (per the LDRS design) |
+| Piece | What it does |
 |---|---|
-| Data in browser `localStorage`; audit trail in a separate key | PostgreSQL + MongoDB on a secured server; audit log on a separate server, append-only |
-| Access rules run in the browser (`api/permissions.js`) | Same rules in the API server for every request |
-| PBKDF2 password hashing in the browser | bcrypt or Argon2 on the server; HTTPS everywhere |
-| Images encrypted in IndexedDB | Object storage outside the web folder, key in a KMS, malware scan (e.g. ClamAV) |
-| OCR with tesseract.js in the browser (downloads once; falls back to typing) | Internal Python service with Tesseract + OpenCV, not reachable from the internet |
-| Demo SMS phone | Africa's Talking via `VITE_SMS_GATEWAY_URL` → your server (API key stays server-side) |
-| Simple arithmetic CAPTCHA | Cloudflare Turnstile / hCaptcha verified on the server |
-| Daily snapshot in browser storage | Daily encrypted database backups with a tested restore |
+| `client.js` | `api.entities.X`, `api.auth`, `api.functions.invoke()`; every call is checked against the signed-in role |
+| `db.js` | Tables in `localStorage`, schema checks, transactions for multi-record changes, daily snapshots |
+| `recordChecks.js` | Field rules applied on every write (the same checks the forms run) |
+| `permissions.js` | Who may read or change each record, and which fields are masked |
+| `functions.js`, `reviewFunctions.js` | Operations that must not be trusted to the screen: search, matching, claims, handover, exports, backups |
+| `auditStore.js` | Append-only audit log; each entry carries the SHA-256 of the one before it |
+| `fileStore.js` | Photographs encrypted with AES-256-GCM in IndexedDB |
 
-Still to do from the guide's "Can add later" list: penetration test before rollout, more document
-types' official formats, links to official registries (only with a formal agreement), and full
-Kiswahili screens (SMS and alerts are already bilingual — have a native speaker review the wording).
+Passwords are hashed with PBKDF2-SHA256 (310 000 iterations), officers and admins use a two-step
+code, accounts lock after five failures, sessions sign out after 15 idle minutes, and the
+production build ships a strict Content Security Policy.
+
+### Moving to production
+
+| Prototype | Production |
+|---|---|
+| Data in `localStorage`, audit log under a separate key | PostgreSQL for records; the audit log on a separate append-only store |
+| Access rules in the browser (`src/api/permissions.js`) | The same rules in an API server for every request |
+| PBKDF2 in the browser | bcrypt or Argon2 on the server, HTTPS everywhere |
+| Photographs in IndexedDB | Object storage outside the web root, keys in a KMS, malware scanning |
+| OCR with tesseract.js in the browser | An internal OCR service not reachable from the internet |
+| Demo SMS phone | Africa's Talking through `VITE_SMS_GATEWAY_URL` and your server |
+| Arithmetic check question | Cloudflare Turnstile or hCaptcha verified on the server |
+
+`docs/SETUP.md` covers installation and deployment in more detail, and `docs/TESTING.md` is the
+checklist for testing a release in both themes.
