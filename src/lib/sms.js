@@ -24,6 +24,7 @@ import { maskPhone } from '@/lib/ldrs';
 
 export const SMS_SENDER_ID = 'LDRS-KE';
 const GATEWAY_URL = import.meta.env.VITE_SMS_GATEWAY_URL || '';
+export const smsGatewayConfigured = Boolean(GATEWAY_URL);
 const OUTBOX_KEY = 'ldrs.demo-sms.v1';
 const MAX_ATTEMPTS = 3;
 
