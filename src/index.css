@@ -33,11 +33,22 @@
 }
 
 @media print {
+    @page {
+        margin: 14mm;
+    }
+
     .print\:hidden {
         display: none !important;
     }
 
     body {
         background: #ffffff;
+        color: #000000;
+    }
+
+    .print-plain {
+        border: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
     }
 }

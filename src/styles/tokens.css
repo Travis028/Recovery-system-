@@ -117,63 +117,65 @@
   }
 }
 
-/* Dark theme: same names, values tuned for dark surfaces (WCAG AA for body and muted text). */
-.dark {
-  color-scheme: dark;
+/* Dark theme: same names, values tuned for dark surfaces (WCAG AA for body and muted text). Screen only: printed pages always use the light values. */
+@media screen {
+  .dark {
+    color-scheme: dark;
 
-  --background: 216 28% 8%;
-  --foreground: 210 20% 94%;
-  --card: 216 24% 12%;
-  --card-foreground: 210 20% 94%;
-  --popover: 216 24% 14%;
-  --popover-foreground: 210 20% 94%;
-  --muted: 216 20% 17%;
-  --muted-foreground: 214 14% 68%;
-  --border: 216 16% 22%;
-  --border-strong: 216 14% 34%;
-  --input: 216 12% 44%;
-  --ring: 188 70% 55%;
+    --background: 216 28% 8%;
+    --foreground: 210 20% 94%;
+    --card: 216 24% 12%;
+    --card-foreground: 210 20% 94%;
+    --popover: 216 24% 14%;
+    --popover-foreground: 210 20% 94%;
+    --muted: 216 20% 17%;
+    --muted-foreground: 214 14% 68%;
+    --border: 216 16% 22%;
+    --border-strong: 216 14% 34%;
+    --input: 216 12% 44%;
+    --ring: 188 70% 55%;
 
-  --primary: 188 70% 48%;
-  --primary-hover: 188 72% 56%;
-  --primary-foreground: 216 40% 8%;
-  --primary-subtle: 190 50% 15%;
-  --primary-subtle-foreground: 188 70% 74%;
+    --primary: 188 70% 48%;
+    --primary-hover: 188 72% 56%;
+    --primary-foreground: 216 40% 8%;
+    --primary-subtle: 190 50% 15%;
+    --primary-subtle-foreground: 188 70% 74%;
 
-  --accent: 258 70% 72%;
-  --accent-foreground: 258 40% 12%;
-  --accent-subtle: 258 30% 20%;
-  --accent-subtle-foreground: 258 80% 84%;
+    --accent: 258 70% 72%;
+    --accent-foreground: 258 40% 12%;
+    --accent-subtle: 258 30% 20%;
+    --accent-subtle-foreground: 258 80% 84%;
 
-  --success: 150 55% 45%;
-  --success-foreground: 150 60% 8%;
-  --success-subtle: 150 40% 13%;
-  --success-subtle-foreground: 145 55% 72%;
-  --success-border: 150 35% 26%;
+    --success: 150 55% 45%;
+    --success-foreground: 150 60% 8%;
+    --success-subtle: 150 40% 13%;
+    --success-subtle-foreground: 145 55% 72%;
+    --success-border: 150 35% 26%;
 
-  --warning: 38 90% 55%;
-  --warning-foreground: 36 70% 10%;
-  --warning-subtle: 36 50% 13%;
-  --warning-subtle-foreground: 40 90% 72%;
-  --warning-border: 36 45% 28%;
+    --warning: 38 90% 55%;
+    --warning-foreground: 36 70% 10%;
+    --warning-subtle: 36 50% 13%;
+    --warning-subtle-foreground: 40 90% 72%;
+    --warning-border: 36 45% 28%;
 
-  --danger: 0 75% 62%;
-  --danger-foreground: 0 60% 10%;
-  --danger-subtle: 0 45% 15%;
-  --danger-subtle-foreground: 0 85% 80%;
-  --danger-border: 0 40% 32%;
+    --danger: 0 75% 62%;
+    --danger-foreground: 0 60% 10%;
+    --danger-subtle: 0 45% 15%;
+    --danger-subtle-foreground: 0 85% 80%;
+    --danger-border: 0 40% 32%;
 
-  --info: 214 85% 66%;
-  --info-foreground: 214 60% 10%;
-  --info-subtle: 214 45% 16%;
-  --info-subtle-foreground: 214 90% 80%;
-  --info-border: 214 40% 32%;
+    --info: 214 85% 66%;
+    --info-foreground: 214 60% 10%;
+    --info-subtle: 214 45% 16%;
+    --info-subtle-foreground: 214 90% 80%;
+    --info-border: 214 40% 32%;
 
-  --chart-1: 199 89% 60%;
-  --chart-2: 38 92% 56%;
-  --chart-grid: 216 16% 20%;
+    --chart-1: 199 89% 60%;
+    --chart-2: 38 92% 56%;
+    --chart-grid: 216 16% 20%;
 
-  --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.4);
-  --shadow-md: 0 4px 12px -2px hsl(0 0% 0% / 0.5), 0 2px 4px -2px hsl(0 0% 0% / 0.4);
-  --shadow-lg: 0 16px 32px -8px hsl(0 0% 0% / 0.6), 0 4px 8px -4px hsl(0 0% 0% / 0.4);
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.4);
+    --shadow-md: 0 4px 12px -2px hsl(0 0% 0% / 0.5), 0 2px 4px -2px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 16px 32px -8px hsl(0 0% 0% / 0.6), 0 4px 8px -4px hsl(0 0% 0% / 0.4);
+  }
 }
