@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     darkMode: ["class"],
-    content: ["./index.html", "./main.jsx", "./App.jsx", "./Components/**/*.{js,jsx}", "./pages/**/*.{js,jsx}", "./lib/**/*.js", "./hooks/**/*.js"],
+    content: ["./index.html", "./src/**/*.{js,jsx}"],
     theme: {
         extend: {
             opacity: Object.fromEntries(Array.from({ length: 101 }, (_, i) => [i, `${i / 100}`])),

@@ -36,11 +36,7 @@ function securityHeadersPlugin() {
 export default defineConfig({
   plugins: [react(), securityHeadersPlugin()],
   resolve: {
-    // The original layout keeps components in "Components/"; imports use "@/components/...".
-    alias: [
-      { find: /^@\/components\//, replacement: path.join(root, 'Components') + '/' },
-      { find: /^@\//, replacement: root + '/' },
-    ],
+    alias: { '@': path.join(root, 'src') },
   },
   server: { port: 5173, host: true },
   build: { outDir: 'dist', sourcemap: false, chunkSizeWarningLimit: 1200 },
