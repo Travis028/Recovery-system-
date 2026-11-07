@@ -1,28 +1,28 @@
 import { cn } from '@/lib/utils';
 
 const TONES = {
-  blue: 'bg-blue-50 text-blue-800',
-  violet: 'bg-violet-50 text-violet-700',
-  indigo: 'bg-indigo-50 text-indigo-700',
-  emerald: 'bg-emerald-50 text-emerald-700',
-  amber: 'bg-amber-50 text-amber-700',
-  rose: 'bg-rose-50 text-rose-700',
-  slate: 'bg-slate-100 text-slate-700',
+  primary: 'bg-primary-subtle text-primary-subtle-foreground',
+  accent: 'bg-accent-subtle text-accent-subtle-foreground',
+  success: 'bg-success-subtle text-success-subtle-foreground',
+  warning: 'bg-warning-subtle text-warning-subtle-foreground',
+  danger: 'bg-danger-subtle text-danger-subtle-foreground',
+  info: 'bg-info-subtle text-info-subtle-foreground',
+  neutral: 'bg-muted text-muted-foreground',
 };
 
-export default function StatCard({ label, value, icon: Icon, tone = 'blue', hint }) {
+export default function StatCard({ label, value, icon: Icon, tone = 'primary', hint }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-medium text-slate-500">{label}</p>
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
         {Icon ? (
-          <span className={cn('flex h-9 w-9 items-center justify-center rounded-xl', TONES[tone] || TONES.blue)}>
-            <Icon className="h-5 w-5" />
+          <span className={cn('flex h-8 w-8 items-center justify-center rounded-md', TONES[tone] || TONES.primary)}>
+            <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         ) : null}
       </div>
-      <p className="mt-2 font-heading text-2xl font-bold text-slate-900">{value === null || value === undefined ? '—' : value}</p>
-      {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
+      <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">{value === null || value === undefined ? '—' : value}</p>
+      {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }
