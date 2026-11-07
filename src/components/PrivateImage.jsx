@@ -39,7 +39,7 @@ export default function PrivateImage({ fileUri, className, alt }) {
     return <img src={url} alt={alt || 'Document photograph'} className={cn('object-contain', className)} onContextMenu={function (e) { e.preventDefault(); }} />;
   }
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-2 text-slate-400', className)}>
+    <div className={cn('flex flex-col items-center justify-center gap-2 p-4 text-center text-muted-foreground', className)}>
       {state === 'loading' ? <Loader2 className="h-6 w-6 animate-spin" /> : state === 'denied' ? <Lock className="h-6 w-6" /> : <ImageOff className="h-6 w-6" />}
       <span className="text-xs">
         {state === 'loading' ? 'Opening the encrypted photograph' : state === 'denied' ? 'You are not allowed to view this photograph' : state === 'none' ? 'No photograph on record' : 'Photograph not available on this device'}
