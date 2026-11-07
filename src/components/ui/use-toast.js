@@ -10,10 +10,15 @@ function emit() {
   });
 }
 
-export function toast({ title, description, variant, duration }) {
+/**
+ * Shows a short notice. tone is 'success', 'danger' or 'info' (default).
+ * The older variant: 'destructive' is still read as the danger tone.
+ */
+export function toast({ title, description, tone, variant, duration }) {
   counter += 1;
   const id = counter;
-  toasts = toasts.concat([{ id, title, description, variant }]).slice(-4);
+  const resolvedTone = tone || (variant === 'destructive' ? 'danger' : 'info');
+  toasts = toasts.concat([{ id, title, description, tone: resolvedTone }]).slice(-4);
   emit();
   setTimeout(function () {
     dismiss(id);
