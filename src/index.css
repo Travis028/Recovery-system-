@@ -5,12 +5,6 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --radius: 0.85rem;
-    }
-}
-
-@layer base {
     * {
         @apply border-border outline-ring/50;
     }

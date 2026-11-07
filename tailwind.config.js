@@ -34,9 +34,26 @@ module.exports = {
         chart: { 1: token('chart-1'), 2: token('chart-2'), grid: token('chart-grid') },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        sm: 'var(--radius-sm)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+      },
+      boxShadow: {
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+      },
+      spacing: {
+        'page-x': 'var(--space-page-x)',
+        'page-y': 'var(--space-page-y)',
+        section: 'var(--space-section)',
+        card: 'var(--space-card)',
+        sidebar: 'var(--sidebar-width)',
+        topbar: 'var(--topbar-height)',
+      },
+      maxWidth: {
+        content: 'var(--content-max)',
       },
       fontFamily: {
         sans: ['var(--font-sans)'],

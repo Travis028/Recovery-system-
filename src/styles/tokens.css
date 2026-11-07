@@ -82,3 +82,37 @@
   --leading-2xl: 2rem;
   --leading-3xl: 2.25rem;
 }
+
+/* Layout, shape and depth */
+:root {
+  --space-page-x: 1rem;
+  --space-page-y: 1.5rem;
+  --space-section: 1.5rem;
+  --space-card: 1.25rem;
+  --sidebar-width: 16rem;
+  --topbar-height: 3.5rem;
+  --content-max: 76rem;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  --shadow-sm: 0 1px 2px 0 hsl(215 28% 14% / 0.06);
+  --shadow-md: 0 4px 12px -2px hsl(215 28% 14% / 0.08), 0 2px 4px -2px hsl(215 28% 14% / 0.05);
+  --shadow-lg: 0 16px 32px -8px hsl(215 28% 14% / 0.16), 0 4px 8px -4px hsl(215 28% 14% / 0.08);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --space-page-x: 1.5rem;
+    --space-card: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --space-page-x: 2rem;
+    --space-page-y: 2rem;
+  }
+}
