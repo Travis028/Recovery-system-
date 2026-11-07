@@ -37,6 +37,10 @@ const LOCK_MINUTES = 15;
 const TWO_STEP_MINUTES = 5;
 const TWO_STEP_ATTEMPTS = 3;
 
+// markUnclaimed changes records without a role check (it runs at start-up); notifyOwner sends
+// any text to any user. Screens use the narrower functions built on them instead.
+const INTERNAL_FUNCTIONS = ['markUnclaimed', 'notifyOwner'];
+
 /* ---------- Sessions ---------- */
 
 function readSessionToken() {
@@ -531,9 +535,12 @@ function createClient(getActor) {
   client.functions = {
     async invoke(name, args) {
       await ensureSeeded();
+      const actor = getActor();
       const fn = FUNCTIONS[name];
-      if (!fn) throw new ApiError(404, 'Unknown function ' + name);
-      return fn({ actor: getActor(), args: args || {}, server: serverClient, transaction });
+      // Internal functions run only from other server code, never straight from a screen.
+      const hidden = INTERNAL_FUNCTIONS.indexOf(name) >= 0 && !(actor && actor.__system);
+      if (!fn || hidden) throw new ApiError(404, 'Unknown function ' + name);
+      return fn({ actor, args: args || {}, server: serverClient, transaction });
     },
   };
   return client;
