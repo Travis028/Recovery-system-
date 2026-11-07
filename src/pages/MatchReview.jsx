@@ -9,8 +9,6 @@ import ClaimCard from '@/components/claims/ClaimCard';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import { confirmMatch, rejectMatch } from '@/lib/matching';
 import { approveClaim, rejectClaim } from '@/lib/claims';
-import { sendOwnerNotification, foundDocumentAlert } from '@/lib/notifications';
-import { logAction, AUDIT_ACTIONS } from '@/lib/audit';
 import { useToast } from '@/components/ui/use-toast';
 import { ClipboardCheck, ShieldCheck } from 'lucide-react';
 import ErrorState from '@/components/ErrorState';
@@ -200,26 +198,9 @@ function MatchReviewContent() {
   const handleNotify = async function (match) {
     setBusyId(match.id);
     try {
-      const doc = documentsById[match.document_id];
-      const report = reportsById[match.loss_report_id];
-      const point = doc ? pointsById[doc.pickup_point_id] : null;
-      await sendOwnerNotification({
-        userId: report ? report.owner_user_id : match.owner_user_id,
-        ...foundDocumentAlert({
-          documentType: doc ? doc.document_type : 'document',
-          documentNumber: doc ? doc.document_number : '',
-          pickupPointName: point ? point.name : '',
-          referenceCode: match.reference_code,
-        }),
-      });
-      await logAction({
-        action: AUDIT_ACTIONS.NOTIFICATION_SENT,
-        details: 'Collection reminder sent for match ' + match.id,
-        user,
-      });
-      toast({ tone: 'success', title: 'Notification sent', description: 'The owner received the pickup point and reference code again.' });
+      await base44.functions.invoke('sendCollectionReminder', { match_id: match.id });
+      toast({ tone: 'success', title: 'Reminder sent', description: 'The owner received the pickup point and reference code again.' });
     } catch (notifyError) {
-      console.error('Notification could not be sent', notifyError);
       toast({ tone: 'danger', title: 'Could not send the reminder', description: notifyError.message });
     } finally {
       setBusyId(null);

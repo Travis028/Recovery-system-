@@ -5,13 +5,14 @@
  */
 import { ApiError, table, findById, insert, patch, transaction, exportDatabase, importDatabase, dailyBackup, listBackups, restoreBackup } from './db';
 import { roleOf, shape, SYSTEM } from './permissions';
-import { appendAudit, listAudit, verifyChain, purgeAuditOlderThan, exportAuditStore, importAuditStore } from './auditStore';
+import { listAudit, verifyChain, purgeAuditOlderThan, exportAuditStore, importAuditStore } from './auditStore';
 import { deletePrivateFile } from './fileStore';
 import { randomDigits, randomHex, sha256Hex, safeEqual } from './crypto';
 import { checkChallenge, sendChallengeSms } from './base44Client';
+import { assertStation, audit, notifyUser, pointName, requireApprovedStaff, requireRole } from './serverHelpers';
+import { REVIEW_FUNCTIONS } from './reviewFunctions';
 import {
   documentTypeLabel,
-  idLabelFor,
   isValidKenyanPhone,
   maskDocumentNumber,
   maskName,
@@ -24,7 +25,7 @@ import { checkDocumentNumber, checkPersonName } from '@/lib/validation';
 import { hammingDistance } from '@/lib/image';
 import { createMatchesForDocument, matchLossReportAgainstHeldDocuments } from '@/lib/matching';
 import { buildOtpMessage } from '@/lib/notifications';
-import { buildOtpSms, deliverSms, SMS_SENDER_ID } from '@/lib/sms';
+import { buildOtpSms } from '@/lib/sms';
 import { AUDIT_ACTIONS } from '@/lib/audit';
 
 export const OTP_MINUTES = 5;
@@ -50,47 +51,11 @@ export function getSetting(key) {
 
 /* ---------- helpers ---------- */
 
-function audit(actor, action, details) {
-  return appendAudit({
-    user_id: actor && !actor.__system ? actor.id : null,
-    actor_role: roleOf(actor) || 'Anonymous',
-    action,
-    details,
-  });
-}
-
-function requireRole(actor, roles, message) {
-  const role = roleOf(actor);
-  if (!actor) throw new ApiError(401, 'Please sign in.');
-  if (role === 'System') return role;
-  if (roles.indexOf(role) < 0) throw new ApiError(403, message || 'Your role cannot do this.');
-  return role;
-}
-
-function requireApprovedStaff(actor) {
-  const role = requireRole(actor, ['Officer', 'Admin'], 'Only officers and administrators can do this.');
-  if (role === 'Officer' && (!actor.approved || !actor.pickup_point_id)) {
-    throw new ApiError(403, 'Your officer account is waiting for approval by an administrator.');
-  }
-  return role;
-}
-
-function assertStation(actor, doc) {
-  if (roleOf(actor) === 'Officer' && doc.pickup_point_id !== actor.pickup_point_id) {
-    throw new ApiError(403, 'This document is held at another station.');
-  }
-}
-
 function recentEvents(userId, kind, minutes) {
   const since = Date.now() - minutes * 60 * 1000;
   return table('RateEvent').filter(function (row) {
     return row.user_id === userId && row.kind === kind && new Date(row.created_date).getTime() >= since;
   });
-}
-
-function pointName(id) {
-  const point = findById('PickupPoint', id);
-  return point ? point.name : '';
 }
 
 async function receiptHash(fields) {
@@ -599,26 +564,7 @@ export const FUNCTIONS = {
     if (role !== 'System' && role !== 'Admin' && !(role === 'Officer' && actor.approved)) {
       throw new ApiError(403, 'Your role cannot send notifications.');
     }
-    const owner = args.userId ? findById('User', args.userId) : null;
-    const lang = owner && owner.language === 'sw' ? 'sw' : 'en';
-    const message = lang === 'sw' && args.messageSw ? args.messageSw : args.message;
-    const inApp = insert('Notification', { user_id: args.userId || null, message, channel: 'In-app', language: lang, delivery_status: 'In-app', sender: SMS_SENDER_ID }, actor.id);
-
-    if (owner && owner.phone && owner.phone_verified) {
-      const smsText = lang === 'sw' ? args.smsMessageSw || args.messageSw || message : args.smsMessage || message;
-      const result = await deliverSms({ to: owner.phone, message: smsText });
-      insert('Notification', {
-        user_id: owner.id,
-        phone: maskPhone(owner.phone),
-        message: smsText.replace(/\b\d{6}\b/g, '••••••'),
-        channel: 'SMS',
-        language: lang,
-        sender: SMS_SENDER_ID,
-        delivery_status: result.status,
-        attempts: result.attempts,
-      }, actor.id);
-    }
-    return shape('Notification', actor, inApp);
+    return notifyUser({ actor, ...args });
   },
 
   /* --- statistics: totals only, no personal details --- */
@@ -873,4 +819,5 @@ export const FUNCTIONS = {
     });
     return { count };
   },
+  ...REVIEW_FUNCTIONS,
 };
