@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import useLdrsUser from '@/hooks/useLdrsUser';
+import useLdrsUser, { sessionHasEnded } from '@/hooks/useLdrsUser';
 import useIdleLogout from '@/hooks/useIdleLogout';
 import { navSectionsForRole } from '@/lib/nav';
 import Sidebar from '@/components/layout/Sidebar';
@@ -29,7 +29,7 @@ export default function AppLayout() {
   );
 
   if (loading) return <Loader label="Opening LDRS" />;
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search, expired: sessionHasEnded() }} />;
 
   const sections = navSectionsForRole(role);
 

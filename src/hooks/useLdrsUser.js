@@ -13,7 +13,24 @@ import { resolveRole } from '@/lib/ldrs';
 let cachedUser = null;
 const listeners = new Set();
 
+let sessionEnded = false;
+
+// A request was refused for lack of a session while someone was signed in: their session
+// expired or was revoked (for example after a password reset on another device).
+window.addEventListener('ldrs:session-ended', function () {
+  if (cachedUser) {
+    sessionEnded = true;
+    publish(null);
+  }
+});
+
+/** True after the session ended on its own, until someone signs in again. */
+export function sessionHasEnded() {
+  return sessionEnded;
+}
+
 function publish(user) {
+  if (user) sessionEnded = false;
   cachedUser = user;
   listeners.forEach(function (listener) {
     listener(user);

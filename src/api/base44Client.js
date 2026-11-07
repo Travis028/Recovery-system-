@@ -112,7 +112,11 @@ function page(rows, total) {
 
 function requireActor(getActor) {
   const actor = getActor();
-  if (!actor) throw new ApiError(401, 'Please sign in.');
+  if (!actor) {
+    // Lets the app send the user to sign-in when a session expires or is revoked mid-use.
+    window.dispatchEvent(new CustomEvent('ldrs:session-ended'));
+    throw new ApiError(401, 'Please sign in.');
+  }
   return actor;
 }
 
