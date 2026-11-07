@@ -30,8 +30,6 @@ export const AUDIT_ACTIONS = {
     DATA_REQUEST: 'Data protection request',
 };
 
-export const AUDIT_ACTION_OPTIONS = Object.values(AUDIT_ACTIONS);
-
 /**
  * Records every important action for the audit trail.
  * Logging never blocks the action the user is performing.

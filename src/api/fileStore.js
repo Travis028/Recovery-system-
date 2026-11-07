@@ -88,14 +88,6 @@ export async function getPrivateFile(fileUri) {
   return { blob: new Blob([plain], { type: record.type }), meta: record };
 }
 
-export async function getPrivateFileMeta(fileUri) {
-  const id = String(fileUri || '').replace('private://', '');
-  const record = await run(STORE, 'readonly', function (store) {
-    return store.get(id);
-  });
-  if (!record) return null;
-  return { type: record.type, size: record.size, uploaded_by: record.uploaded_by, uploaded_at: record.uploaded_at };
-}
 
 export async function deletePrivateFile(fileUri) {
   const id = String(fileUri || '').replace('private://', '');

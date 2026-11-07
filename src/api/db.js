@@ -21,7 +21,7 @@ Object.keys(schemaModules).forEach(function (path) {
   SCHEMAS[schema.name] = schema;
 });
 
-export const ENTITY_NAMES = Object.keys(SCHEMAS).filter(function (name) {
+const ENTITY_NAMES = Object.keys(SCHEMAS).filter(function (name) {
   return name !== 'AuditLog';
 });
 
@@ -57,9 +57,6 @@ function persist() {
   localStorage.setItem(DB_KEY, JSON.stringify(state));
 }
 
-export function getState() {
-  return load();
-}
 
 export function table(name) {
   return load().tables[name];
@@ -312,9 +309,4 @@ export function markSeeded() {
 
 export function isSeeded() {
   return Boolean(load().seeded);
-}
-
-export function resetDatabase() {
-  state = emptyState();
-  persist();
 }

@@ -83,9 +83,6 @@ export function resolveRole(user) {
     return null;
 }
 
-export function isOfficerApproved(user) {
-    return Boolean(user && user.approved);
-}
 
 export function formatDate(value) {
     if (!value) return DASH;
@@ -190,7 +187,6 @@ export function nameSimilarity(left, right) {
 }
 
 const REFERENCE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const DIGITS = '0123456789';
 
 function randomIndex(size) {
     const webCrypto = globalThis.crypto;
@@ -212,8 +208,4 @@ function randomChars(length, alphabet) {
 
 export function generateReferenceCode() {
     return 'LDRS-' + randomChars(6, REFERENCE_ALPHABET);
-}
-
-export function generateOtp() {
-    return randomChars(6, DIGITS);
 }

@@ -36,52 +36,5 @@
     "otp_code",
     "expires_at"
   ],
-  "rls": {
-    "read": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.owner_user_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "data.approved": true
-          }
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "data.approved": true
-          }
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
-  },
   "description": "One-time collection code. Expires after 5 minutes, 3 attempts then locked. Only the hash is used for verification; the plain code is visible to the owner only."
 }

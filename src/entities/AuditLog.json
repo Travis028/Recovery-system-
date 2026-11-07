@@ -27,17 +27,5 @@
   "required": [
     "action"
   ],
-  "rls": {
-    "read": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
-    "update": false,
-    "delete": false
-  },
   "description": "Append-only audit trail. Kept in a separate store from the main database; every entry is linked to the previous one by a SHA-256 hash so tampering is visible."
 }

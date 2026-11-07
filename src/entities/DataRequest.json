@@ -31,11 +31,5 @@
   },
   "required": [
     "request_type"
-  ],
-  "rls": {
-    "read": "requester, admin",
-    "create": "owner",
-    "update": "admin",
-    "delete": false
-  }
+  ]
 }

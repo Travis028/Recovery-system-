@@ -94,53 +94,5 @@
     "document_type",
     "found_location",
     "pickup_point_id"
-  ],
-  "rls": {
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "data.approved": true
-          }
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+  ]
 }

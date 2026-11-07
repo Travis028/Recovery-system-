@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { resolveRole, isOfficerApproved } from '@/lib/ldrs';
+import { resolveRole } from '@/lib/ldrs';
 
 /**
  * Loads the signed-in LDRS user together with the role the app routes on.
@@ -11,12 +11,10 @@ import { resolveRole, isOfficerApproved } from '@/lib/ldrs';
 // Every screen using this hook is told when the user record changes (for example
 // after the phone number is verified).
 let cachedUser = null;
-let loaded = false;
 const listeners = new Set();
 
 function publish(user) {
   cachedUser = user;
-  loaded = true;
   listeners.forEach(function (listener) {
     listener(user);
   });
@@ -63,7 +61,5 @@ export default function useLdrsUser() {
     role,
     loading,
     reload,
-    setUser: publish,
-    officerApproved: isOfficerApproved(user),
   };
 }

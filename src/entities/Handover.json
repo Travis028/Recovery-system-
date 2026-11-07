@@ -45,29 +45,5 @@
     "match_id",
     "released_to"
   ],
-  "rls": {
-    "read": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "data.approved": true
-          }
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
-    "update": false,
-    "delete": false
-  },
   "description": "Permanent handover record. Read-only once saved; a document can only be released once."
 }

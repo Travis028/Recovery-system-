@@ -9,11 +9,5 @@
   },
   "required": [
     "key"
-  ],
-  "rls": {
-    "read": "any signed-in user",
-    "create": "admin",
-    "update": "admin",
-    "delete": false
-  }
+  ]
 }

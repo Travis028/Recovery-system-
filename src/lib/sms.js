@@ -79,23 +79,6 @@ export async function deliverSms({ to, message }) {
   return { status: 'Failed', attempts: MAX_ATTEMPTS, error: lastError };
 }
 
-export function buildFoundDocumentSms({ documentType, documentNumber, pickupPointName, referenceCode, lang }) {
-  const pickup = pickupPointName || (lang === 'sw' ? 'mahali palipoonyeshwa kwenye LDRS' : 'the pickup point shown in LDRS');
-  if (lang === 'sw') {
-    return [
-      `LDRS: Hati inayoweza kuwa yako imeletwa (${documentType}).`,
-      `Nambari (sehemu imefichwa): ${maskDocumentNumber(documentNumber)}.`,
-      `Chukua katika: ${pickup}. Kumbukumbu: ${referenceCode}.`,
-      'Onyo: usimpe mtu yeyote nambari hii kwa simu.',
-    ].join(' ');
-  }
-  return [
-    `LDRS: A document that may be yours has been handed in (${documentType}).`,
-    `Number (partly hidden): ${maskDocumentNumber(documentNumber)}.`,
-    `Collect at: ${pickup}. Reference: ${referenceCode}.`,
-    'Warning: never share this code with anyone by phone.',
-  ].join(' ');
-}
 
 export function buildOtpSms({ referenceCode, pickupPointName, otpCode, minutes, lang }) {
   const pickup = pickupPointName || (lang === 'sw' ? 'mahali pa kuchukua' : 'the pickup point');

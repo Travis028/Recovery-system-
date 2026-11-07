@@ -38,11 +38,5 @@
   "required": [
     "document_id",
     "match_type"
-  ],
-  "rls": {
-    "read": "owner of the match, officer of the station holding the document, admin",
-    "create": "approved officer, admin, server",
-    "update": "approved officer of the station, admin",
-    "delete": false
-  }
+  ]
 }

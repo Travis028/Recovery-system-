@@ -52,11 +52,5 @@
   },
   "required": [
     "message"
-  ],
-  "rls": {
-    "read": "recipient, admin",
-    "create": "approved officer, admin, server",
-    "update": "recipient (read flag only)",
-    "delete": false
-  }
+  ]
 }

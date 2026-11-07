@@ -68,11 +68,5 @@
   "required": [
     "email",
     "full_name"
-  ],
-  "rls": {
-    "read": "self, admin (password fields are never returned)",
-    "create": "public registration (Finder, Owner, Officer pending approval)",
-    "update": "self (name, language), admin (role, approval, station, lock)",
-    "delete": false
-  }
+  ]
 }
