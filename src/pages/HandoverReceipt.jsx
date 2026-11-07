@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import RoleGuard from '@/components/RoleGuard';
 import Loader from '@/components/Loader';
+import EmptyState from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { documentTypeLabel, formatDate, formatDateTime, idLabelFor, maskDocumentNumber } from '@/lib/ldrs';
@@ -57,7 +58,7 @@ function HandoverReceiptContent() {
           setOfficerName(officer);
           const verifyUrl =
             window.location.origin + '/verify-receipt/' + record.id + '?h=' + String(record.integrity_hash || '').slice(0, 16);
-          setQr(await QRCode.toDataURL(verifyUrl, { margin: 1, width: 160, color: { dark: '#0c4453' } }));
+          setQr(await QRCode.toDataURL(verifyUrl, { margin: 1, width: 160, color: { dark: '#0b3b47', light: '#ffffff' } }));
         } catch (loadError) {
           console.error('Receipt could not be loaded', loadError);
           setMissing(true);
@@ -77,142 +78,107 @@ function HandoverReceiptContent() {
 
   if (missing || !handover || !document) {
     return (
-      <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
-        <p className="font-heading text-lg font-semibold text-slate-800">Receipt not found</p>
-        <Button variant="outline" className="mt-4 rounded-xl" asChild>
-          <Link to="/handover">Back to handover list</Link>
-        </Button>
-      </div>
+      <EmptyState
+        title="Receipt not found"
+        action={
+          <Button variant="secondary" asChild>
+            <Link to="/handover">Back to handover</Link>
+          </Button>
+        }
+      />
     );
   }
 
+  const fields = [
+    ['Document type', documentTypeLabel(document.document_type)],
+    ['Name on the document', document.owner_name],
+    [idLabelFor(document.document_type), maskDocumentNumber(document.document_number)],
+    ['Reference code', match ? match.reference_code : 'Not available'],
+    ['Released to', handover.released_to],
+    ['ID of the person collecting', handover.claimant_id_type ? handover.claimant_id_type + ' · ' + maskDocumentNumber(handover.claimant_id_number) : 'Not recorded'],
+    ['Verification method', handover.verification_method],
+    ['Released by', officerName],
+    ['Pickup point', point ? point.name + ', ' + point.location : 'Not recorded'],
+    ['Date found', formatDate(document.date_found)],
+    ['Document status', document.status],
+  ];
+
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap gap-3 print:hidden">
-        <Button variant="outline" className="gap-2 rounded-xl" asChild>
-          <Link to="/handover">
-            <ArrowLeft className="h-4 w-4" />
-            Back to handover list
-          </Link>
-        </Button>
-        <Button
-          className="gap-2 rounded-xl bg-blue-900 hover:bg-blue-950"
-          onClick={function () {
-            window.print();
-          }}
-        >
-          <Printer className="h-4 w-4" />
+    <div className="space-y-section">
+      <div className="flex flex-wrap gap-2 print:hidden">
+        <Button onClick={function () { window.print(); }}>
+          <Printer aria-hidden="true" />
           Print receipt
+        </Button>
+        <Button variant="secondary" asChild>
+          <Link to="/handover">
+            <ArrowLeft aria-hidden="true" />
+            Back to handover
+          </Link>
         </Button>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-5">
+      <article aria-label="Handover receipt" className="print-plain rounded-lg border border-border bg-card p-6 shadow-sm sm:p-10">
+        <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
           <div className="flex items-center gap-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-900 to-violet-700 text-white">
-              <ShieldCheck className="h-6 w-6" />
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
-              <p className="font-heading text-lg font-bold text-slate-900">LDRS</p>
-              <p className="text-xs text-slate-500">Lost Documents Recovery System</p>
+              <p className="text-base font-semibold">LDRS</p>
+              <p className="text-xs text-muted-foreground">Lost Documents Recovery System</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
             <div className="text-right">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Handover receipt</p>
-              <p className="mt-1 font-heading text-sm font-semibold text-slate-900">
-                {handover.id.slice(0, 8).toUpperCase()}
-              </p>
-              <p className="text-xs text-slate-500">{formatDateTime(handover.released_at || handover.created_date)}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Handover receipt</p>
+              <p className="mt-1 font-mono text-sm font-semibold">{handover.id.slice(0, 8).toUpperCase()}</p>
+              <p className="text-xs text-muted-foreground">{formatDateTime(handover.released_at || handover.created_date)}</p>
             </div>
             {qr ? (
               <figure className="text-center">
-                <img src={qr} alt="QR code to verify this receipt" className="h-24 w-24 rounded-lg border border-slate-200" />
-                <figcaption className="mt-1 text-[10px] text-slate-500">Scan to verify</figcaption>
+                <img src={qr} alt="QR code that opens the receipt check page" className="h-24 w-24 rounded-md border border-border bg-white" />
+                <figcaption className="mt-1 text-[11px] text-muted-foreground">Scan to verify</figcaption>
               </figure>
             ) : null}
           </div>
-        </div>
+        </header>
 
-        <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Document type</dt>
-            <dd className="mt-1 text-sm text-slate-800">{documentTypeLabel(document.document_type)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Name on the document</dt>
-            <dd className="mt-1 text-sm text-slate-800">{document.owner_name}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {idLabelFor(document.document_type)}
-            </dt>
-            <dd className="mt-1 text-sm text-slate-800">{maskDocumentNumber(document.document_number)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reference code</dt>
-            <dd className="mt-1 text-sm text-slate-800">{match ? match.reference_code : 'Not available'}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Released to</dt>
-            <dd className="mt-1 text-sm text-slate-800">{handover.released_to}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">ID of the person collecting</dt>
-            <dd className="mt-1 text-sm text-slate-800">
-              {handover.claimant_id_type
-                ? handover.claimant_id_type + ' - ' + maskDocumentNumber(handover.claimant_id_number)
-                : 'Not recorded'}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Verification method</dt>
-            <dd className="mt-1 text-sm text-slate-800">{handover.verification_method}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Released by</dt>
-            <dd className="mt-1 text-sm text-slate-800">{officerName}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pickup point</dt>
-            <dd className="mt-1 text-sm text-slate-800">
-              {point ? point.name + ' - ' + point.location : 'Not recorded'}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Date found</dt>
-            <dd className="mt-1 text-sm text-slate-800">{formatDate(document.date_found)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Document status</dt>
-            <dd className="mt-1 text-sm text-slate-800">{document.status}</dd>
-          </div>
+        <dl className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+          {fields.map(function (field) {
+            return (
+              <div key={field[0]}>
+                <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{field[0]}</dt>
+                <dd className="mt-1 text-sm">{field[1]}</dd>
+              </div>
+            );
+          })}
         </dl>
 
         {handover.notes ? (
-          <div className="mt-6 rounded-2xl bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Handover note</p>
-            <p className="mt-1 text-sm text-slate-700">{handover.notes}</p>
+          <div className="mt-6 rounded-md bg-muted p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Handover note</p>
+            <p className="mt-1 text-sm">{handover.notes}</p>
           </div>
         ) : null}
 
-        <div className="mt-8 grid gap-8 sm:grid-cols-2">
-          <div>
-            <div className="h-10 border-b border-dashed border-slate-300" />
-            <p className="mt-2 text-xs text-slate-500">Signature of person collecting</p>
-          </div>
-          <div>
-            <div className="h-10 border-b border-dashed border-slate-300" />
-            <p className="mt-2 text-xs text-slate-500">Signature of officer</p>
-          </div>
+        <div className="mt-10 grid gap-8 sm:grid-cols-2">
+          {['Signature of person collecting', 'Signature of officer'].map(function (label) {
+            return (
+              <div key={label}>
+                <div className="h-10 border-b border-dashed border-border-strong" />
+                <p className="mt-2 text-xs text-muted-foreground">{label}</p>
+              </div>
+            );
+          })}
         </div>
 
-        <p className="mt-8 text-xs text-slate-500">
-          This receipt confirms that the document described above was released after the reference code, document number,
-          the claimant's physical ID and the one-time collection code were verified. The record is read-only. Scan the QR
-          code to confirm the receipt is genuine. Integrity code: {String(handover.integrity_hash || '').slice(0, 16)}.
+        <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
+          This receipt confirms the document above was released after the reference code, the document number, the claimant's ID and
+          the one-time collection code were checked. The record cannot be changed. Scan the QR code to confirm the receipt is genuine.
+          Integrity code: <span className="font-mono">{String(handover.integrity_hash || '').slice(0, 16)}</span>.
         </p>
-      </div>
+      </article>
     </div>
   );
 }
