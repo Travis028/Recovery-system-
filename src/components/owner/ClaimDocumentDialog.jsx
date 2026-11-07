@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import CaptchaPrompt from '@/components/security/CaptchaPrompt';
 import { useToast } from '@/components/ui/use-toast';
 import { DOCUMENT_TYPES, documentTypeLabel, formatDate } from '@/lib/ldrs';
-import { logAction, AUDIT_ACTIONS } from '@/lib/audit';
 import { checkKenyanPhone, checkMaxLength, checkPersonName, collectErrors } from '@/lib/validation';
 import { cn } from '@/lib/utils';
 
@@ -102,25 +101,12 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
     setSubmitting(true);
     setError('');
     try {
-      const existing = await base44.entities.Claim.filter({ document_id: selected.id, owner_user_id: user.id, status: { $in: ['Pending', 'Approved'] } }, { limit: 1 });
-      if (existing.length) {
-        setError('You have already claimed this document. Watch your alerts for the officer decision.');
-        return;
-      }
-      await base44.entities.Claim.create({
+      await base44.functions.invoke('submitClaim', {
         document_id: selected.id,
-        document_type: selected.document_type,
-        owner_user_id: user.id,
         owner_name: ownerName.trim(),
         phone: phone.trim(),
         document_number: documentNumber.trim(),
         note: note.trim(),
-        status: 'Pending',
-      });
-      await logAction({
-        action: AUDIT_ACTIONS.CLAIM_SUBMITTED,
-        details: 'Claim submitted for a ' + documentTypeLabel(selected.document_type) + ' (' + selected.document_number + ')',
-        user,
       });
       toast({ tone: 'success', title: 'Claim sent', description: 'An officer at the pickup point will check it and you will get an alert.' });
       onClaimed();

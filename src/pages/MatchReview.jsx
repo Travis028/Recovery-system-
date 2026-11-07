@@ -7,7 +7,6 @@ import Loader from '@/components/Loader';
 import MatchCard from '@/components/matches/MatchCard';
 import ClaimCard from '@/components/claims/ClaimCard';
 import useLdrsUser from '@/hooks/useLdrsUser';
-import { approveClaim, rejectClaim } from '@/lib/claims';
 import { useToast } from '@/components/ui/use-toast';
 import { ClipboardCheck, ShieldCheck } from 'lucide-react';
 import ErrorState from '@/components/ErrorState';
@@ -147,35 +146,18 @@ function MatchReviewContent() {
     }
   };
 
-  const handleApproveClaim = async function (claim) {
+  const decideClaim = async function (claim, decision) {
     setBusyId('claim-' + claim.id);
     try {
-      const doc = claimDocsById[claim.document_id] || (await base44.entities.Document.get(claim.document_id));
-      await approveClaim({
-        claim,
-        document: doc,
-        pickupPoint: pointsById[doc.pickup_point_id] || null,
-        actor: user,
-      });
+      await base44.functions.invoke(decision === 'approve' ? 'approveClaim' : 'rejectClaim', { claim_id: claim.id });
       await load();
-      toast({ tone: 'success', title: 'Claim approved', description: 'The owner received the pick-up point and reference code.' });
+      toast(
+        decision === 'approve'
+          ? { tone: 'success', title: 'Claim approved', description: 'The owner received the pickup point and reference code.' }
+          : { tone: 'success', title: 'Claim rejected', description: 'The owner was told to bring proof of ownership.' },
+      );
     } catch (claimError) {
-      console.error('Claim could not be approved', claimError);
-      toast({ tone: 'danger', title: 'Could not approve the claim', description: claimError.message });
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const handleRejectClaim = async function (claim) {
-    setBusyId('claim-' + claim.id);
-    try {
-      await rejectClaim({ claim, document: claimDocsById[claim.document_id] || null, actor: user });
-      await load();
-      toast({ tone: 'success', title: 'Claim rejected', description: 'The owner was told to bring proof of ownership.' });
-    } catch (claimError) {
-      console.error('Claim could not be rejected', claimError);
-      toast({ tone: 'danger', title: 'Could not reject the claim', description: claimError.message });
+      toast({ tone: 'danger', title: decision === 'approve' ? 'Could not approve the claim' : 'Could not reject the claim', description: claimError.message });
     } finally {
       setBusyId(null);
     }
@@ -245,8 +227,8 @@ function MatchReviewContent() {
                 claim={claim}
                 document={claimDocsById[claim.document_id]}
                 busy={busyId === 'claim-' + claim.id}
-                onApprove={handleApproveClaim}
-                onReject={handleRejectClaim}
+                onApprove={function (claim) { decideClaim(claim, 'approve'); }}
+                onReject={function (claim) { decideClaim(claim, 'reject'); }}
               />
             );
           })

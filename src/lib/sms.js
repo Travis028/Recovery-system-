@@ -1,4 +1,4 @@
-import { maskDocumentNumber, maskPhone } from '@/lib/ldrs';
+import { maskPhone } from '@/lib/ldrs';
 
 /**
  * SMS delivery.
