@@ -56,7 +56,7 @@ export async function createMatchesForDocument({ doc, pickupPoint, actor, client
     if (result.matchType === 'Exact') {
       await source.entities.LossReport.update(report.id, { status: 'Matched' });
       await sendOwnerNotification({
-        client: api,
+        client: source,
         userId: report.owner_user_id,
         ...foundDocumentAlert({
           documentType: doc.document_type,
@@ -118,7 +118,7 @@ export async function matchLossReportAgainstHeldDocuments({ report, actor, clien
       await source.entities.Document.update(doc.id, { status: 'Notified' });
       await source.entities.LossReport.update(report.id, { status: 'Matched' });
       await sendOwnerNotification({
-        client: api,
+        client: source,
         userId: report.owner_user_id,
         ...foundDocumentAlert({
           documentType: doc.document_type,

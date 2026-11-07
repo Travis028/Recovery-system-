@@ -271,7 +271,7 @@ export function importDatabase(data) {
 export function listBackups() {
   try {
     return JSON.parse(localStorage.getItem(BACKUP_KEY) || '[]');
-  } catch (error) {
+  } catch {
     return [];
   }
 }

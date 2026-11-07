@@ -26,7 +26,7 @@ export default function DemoAccounts({ onPick }) {
           );
         })}
       </ul>
-      <p className="mt-2 text-xs text-muted-foreground">Login codes appear in the Demo SMS phone at the bottom right.</p>
+      <p className="mt-2 text-xs text-muted-foreground">Sign-in codes appear in the Demo SMS phone at the bottom left.</p>
     </div>
   );
 }

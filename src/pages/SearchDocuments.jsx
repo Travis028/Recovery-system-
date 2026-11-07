@@ -108,7 +108,7 @@ function SearchContent() {
               </Select>
             </FormField>
             <FormField id="s_name" label="Full name on the document">
-              <Input value={form.name} autoComplete="name" placeholder="Mary Wanjiru Kamau" onChange={function (e) { setField('name', e.target.value); }} />
+              <Input value={form.name} autoComplete="name" placeholder="As printed on the document" onChange={function (e) { setField('name', e.target.value); }} />
             </FormField>
             <FormField id="s_number" label="Or the document number">
               <Input value={form.number} autoComplete="off" placeholder="The full number" onChange={function (e) { setField('number', e.target.value); }} />

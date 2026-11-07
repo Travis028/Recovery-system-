@@ -4,23 +4,23 @@ const BULLET = '\u2022';
 const DASH = '\u2014';
 
 export const DOCUMENT_TYPES = [
-    { value: 'National ID', label: 'National ID', idLabel: 'ID Number' },
-{ value: 'Passport', label: 'Passport', idLabel: 'Passport Number' },
-{ value: "Driver's License", label: "Driver's License", idLabel: 'Licence Number' },
-{ value: 'Birth Certificate', label: 'Birth Certificate', idLabel: 'Certificate Number' },
-{ value: 'Academic Certificate', label: 'Academic Certificate', idLabel: 'Certificate Serial Number' },
-{ value: 'Student ID', label: 'Student ID', idLabel: 'Student ID Number' },
-{ value: 'NHIF Health Card', label: 'NHIF Health Card', idLabel: 'Member Number' },
-{ value: 'NSSF Card', label: 'NSSF Card', idLabel: 'Member Number' },
-{ value: 'Employment ID', label: 'Employment ID', idLabel: 'Staff Number' },
-{ value: 'Other', label: 'Other document', idLabel: 'Document Number' },
+  { value: 'National ID', label: 'National ID', idLabel: 'ID number' },
+  { value: 'Passport', label: 'Passport', idLabel: 'Passport number' },
+  { value: "Driver's License", label: "Driver's licence", idLabel: 'Licence number' },
+  { value: 'Birth Certificate', label: 'Birth certificate', idLabel: 'Certificate number' },
+  { value: 'Academic Certificate', label: 'Academic certificate', idLabel: 'Certificate serial number' },
+  { value: 'Student ID', label: 'Student ID', idLabel: 'Student ID number' },
+  { value: 'NHIF Health Card', label: 'NHIF health card', idLabel: 'Member number' },
+  { value: 'NSSF Card', label: 'NSSF card', idLabel: 'Member number' },
+  { value: 'Employment ID', label: 'Employment ID', idLabel: 'Staff number' },
+  { value: 'Other', label: 'Other document', idLabel: 'Document number' },
 ];
 
 export function idLabelFor(type) {
     const found = DOCUMENT_TYPES.find(function (item) {
         return item.value === type;
     });
-    return found ? found.idLabel : 'Document Number';
+    return found ? found.idLabel : 'Document number';
 }
 
 export function documentTypeLabel(type) {

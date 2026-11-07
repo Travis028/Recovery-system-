@@ -10,8 +10,9 @@ const WIDE_SCREEN = '(min-width: 1024px)';
  * Prototype only: shows the SMS messages LDRS would send (login codes, phone checks,
  * collection codes, alerts). Hidden when a real SMS gateway is configured.
  *
- * On wide screens a new message opens the panel; on phones it only raises the unread
- * badge, so the panel never covers the form the user is filling in.
+ * It sits in the bottom-left corner, below the sidebar on wide screens and away from the
+ * sign-in card. On wide screens a new message opens the panel; on phones it only raises the
+ * unread badge, so the panel never covers the form the user is filling in.
  */
 export default function DemoPhone() {
   const [messages, setMessages] = useState(readOutbox);
@@ -44,7 +45,7 @@ export default function DemoPhone() {
   const latest = messages.slice().reverse();
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex flex-col items-end gap-3 print:hidden">
+    <div className="pointer-events-none fixed bottom-4 left-4 z-40 flex flex-col items-start gap-3 print:hidden">
       {open ? (
         <section
           aria-label="Demo phone messages"

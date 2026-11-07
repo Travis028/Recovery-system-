@@ -116,6 +116,8 @@ function MatchReviewContent() {
     function () {
       load();
     },
+    // load reads role and station from the user; re-run only when those change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [role, user.id, user.pickup_point_id],
   );
 

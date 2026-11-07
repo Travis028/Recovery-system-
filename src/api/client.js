@@ -47,7 +47,7 @@ function readSessionToken() {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
     return raw ? JSON.parse(raw).token : null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

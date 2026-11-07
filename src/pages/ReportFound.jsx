@@ -189,7 +189,7 @@ function ReportFoundContent() {
         <CardHeader>
           <CardTitle id="found-step-1">1. Document type and photograph</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-section pt-0 lg:grid-cols-2">
+        <CardContent className="grid gap-section pt-4 lg:grid-cols-2">
           <div className="space-y-4">
             <FormField id="document_type" label="Document type" error={fields.show('document_type')}>
               <Select value={form.document_type} onValueChange={function (value) { setField('document_type', value); }}>
@@ -250,7 +250,7 @@ function ReportFoundContent() {
         <CardHeader>
           <CardTitle id="found-step-2">2. Details on the document</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 pt-0">
+        <CardContent className="space-y-4 pt-4">
           {ocr ? (
             <Alert tone="info" icon={Sparkles}>
               OCR read the fields below (name {ocr.nameConfidence}% sure, number {ocr.numberConfidence}% sure). Compare anything it was unsure
@@ -283,7 +283,7 @@ function ReportFoundContent() {
         <CardHeader>
           <CardTitle id="found-step-3">3. Where and when it was found</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 pt-0 sm:grid-cols-2">
+        <CardContent className="grid gap-4 pt-4 sm:grid-cols-2">
           <FormField id="found_location" label="Where it was found" error={fields.show('found_location')} className="sm:col-span-2">
             <Input
               value={form.found_location}

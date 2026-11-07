@@ -37,7 +37,7 @@ function wait(ms) {
 export function readOutbox() {
   try {
     return JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]');
-  } catch (error) {
+  } catch {
     return [];
   }
 }

@@ -177,7 +177,7 @@ export default function ReportLostForm({ user }) {
               <CardDescription>Type the details exactly as they are printed, so the match works.</CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-4 pt-0 sm:grid-cols-2">
+          <CardContent className="grid gap-4 pt-4 sm:grid-cols-2">
             <FormField id="document_type" label="Document type" error={fields.show('document_type')} className="sm:col-span-2">
               <Select value={form.document_type} onValueChange={function (value) { setField('document_type', value); }}>
                 <SelectTrigger onBlur={fields.touch('document_type')}>
@@ -215,7 +215,7 @@ export default function ReportLostForm({ user }) {
           <CardHeader>
             <CardTitle>How we reach you</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 pt-0">
+          <CardContent className="space-y-4 pt-4">
             <FormField id="phone" label="Phone number" hint="We use this number only to contact you about this report.">
               <Input value={phoneOk ? maskPhone(user.phone) + ' (verified)' : 'Not verified yet'} readOnly disabled />
             </FormField>
