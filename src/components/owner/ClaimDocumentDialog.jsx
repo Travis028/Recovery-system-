@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useFieldErrors from '@/hooks/useFieldErrors';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert } from '@/components/ui/alert';
@@ -75,7 +75,7 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
     setError('');
     try {
       const looksLikeNumber = /\d/.test(term);
-      const result = await base44.functions.invoke('searchFoundDocuments', {
+      const result = await api.functions.invoke('searchFoundDocuments', {
         document_type: type === 'any' ? '' : type,
         name: looksLikeNumber ? '' : term,
         number: looksLikeNumber ? term : '',
@@ -87,7 +87,7 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
       setCaptcha(null);
     } catch (searchError) {
       if (searchError.code === 'captcha_required') {
-        setCaptcha(await base44.functions.invoke('getCaptcha').catch(() => null));
+        setCaptcha(await api.functions.invoke('getCaptcha').catch(() => null));
       }
       setError(searchError.message || 'The search could not be completed.');
     } finally {
@@ -101,7 +101,7 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
     setSubmitting(true);
     setError('');
     try {
-      await base44.functions.invoke('submitClaim', {
+      await api.functions.invoke('submitClaim', {
         document_id: selected.id,
         owner_name: ownerName.trim(),
         phone: phone.trim(),

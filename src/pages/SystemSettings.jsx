@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import PageHeader from '@/components/PageHeader';
 import Loader from '@/components/Loader';
@@ -43,7 +43,7 @@ function SystemContent() {
   const [busy, setBusy] = useState('');
 
   const { data, loading, error, reload } = useResource(function () {
-    return Promise.all([base44.entities.Setting.list(), base44.functions.invoke('listBackups'), base44.entities.DataRequest.list('-created_date')]);
+    return Promise.all([api.entities.Setting.list(), api.functions.invoke('listBackups'), api.entities.DataRequest.list('-created_date')]);
   }, []);
   const [draft, setDraft] = useState(null);
 
@@ -75,7 +75,7 @@ function SystemContent() {
         for (const row of settings) {
           const value = Number(row.value);
           if (!Number.isFinite(value) || value < 1) throw new Error(SETTING_LABELS[row.key] + ' must be a positive number.');
-          await base44.entities.Setting.update(row.id, { value });
+          await api.entities.Setting.update(row.id, { value });
         }
         await logAction({ action: AUDIT_ACTIONS.ADMIN_CHANGE, details: 'Security and retention settings saved', user });
       },
@@ -90,7 +90,7 @@ function SystemContent() {
       'upload',
       async function () {
         const parsed = JSON.parse(await file.text());
-        await base44.functions.invoke('uploadBackup', { data: parsed });
+        await api.functions.invoke('uploadBackup', { data: parsed });
       },
       'Backup restored',
     );
@@ -114,7 +114,7 @@ function SystemContent() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            <Button disabled={busy === 'snap'} onClick={function () { act('snap', () => base44.functions.invoke('backupNow'), 'Snapshot taken'); }}>
+            <Button disabled={busy === 'snap'} onClick={function () { act('snap', () => api.functions.invoke('backupNow'), 'Snapshot taken'); }}>
               <Save aria-hidden="true" />
               Take snapshot now
             </Button>
@@ -123,7 +123,7 @@ function SystemContent() {
               disabled={busy === 'download'}
               onClick={function () {
                 act('download', async function () {
-                  const file = await base44.functions.invoke('downloadBackup');
+                  const file = await api.functions.invoke('downloadBackup');
                   downloadText(file.filename, JSON.stringify(file.data), 'application/json');
                 });
               }}
@@ -148,7 +148,7 @@ function SystemContent() {
                       variant="secondary"
                       disabled={busy === b.id}
                       onClick={function () {
-                        act(b.id, () => base44.functions.invoke('restoreBackup', { id: b.id }), 'Restored from snapshot');
+                        act(b.id, () => api.functions.invoke('restoreBackup', { id: b.id }), 'Restored from snapshot');
                       }}
                     >
                       <RotateCcw aria-hidden="true" />
@@ -197,7 +197,7 @@ function SystemContent() {
               disabled={busy === 'retention'}
               onClick={function () {
                 act('retention', async function () {
-                  const r = await base44.functions.invoke('runRetention');
+                  const r = await api.functions.invoke('runRetention');
                   toast({
                     tone: 'success',
                     title: 'Retention run finished',
@@ -244,7 +244,7 @@ function SystemContent() {
                             act(
                               r.id,
                               () =>
-                                base44.functions.invoke('completeDataRequest', {
+                                api.functions.invoke('completeDataRequest', {
                                   request_id: r.id,
                                   decision: 'Completed',
                                   response: r.request_type === 'Removal' ? '' : 'Handled by the administrator.',
@@ -263,7 +263,7 @@ function SystemContent() {
                             act(
                               r.id,
                               () =>
-                                base44.functions.invoke('completeDataRequest', {
+                                api.functions.invoke('completeDataRequest', {
                                   request_id: r.id,
                                   decision: 'Declined',
                                   response: 'Declined because the data is still needed for an active recovery.',

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CheckCircle2, Loader2, Smartphone } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useFieldErrors from '@/hooks/useFieldErrors';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ export default function PhoneVerification({ user, onVerified }) {
     setBusy(true);
     setError('');
     try {
-      setChallenge(await base44.functions.invoke('sendPhoneCode', { phone }));
+      setChallenge(await api.functions.invoke('sendPhoneCode', { phone }));
     } catch (sendError) {
       setError(sendError.message || 'The code could not be sent.');
     } finally {
@@ -47,7 +47,7 @@ export default function PhoneVerification({ user, onVerified }) {
     setBusy(true);
     setError('');
     try {
-      await base44.functions.invoke('verifyPhoneCode', { challenge_id: challenge.challenge_id, code });
+      await api.functions.invoke('verifyPhoneCode', { challenge_id: challenge.challenge_id, code });
       setChallenge(null);
       if (onVerified) await onVerified();
     } catch (verifyError) {

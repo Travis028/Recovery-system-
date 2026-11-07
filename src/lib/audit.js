@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 
 export const AUDIT_ACTIONS = {
     LOGIN: 'Login',
@@ -36,7 +36,7 @@ export const AUDIT_ACTIONS = {
  */
 export async function logAction({ action, details, user }) {
     try {
-        await base44.entities.AuditLog.create({
+        await api.entities.AuditLog.create({
             user_id: user ? user.id : null,
             action,
             details: details || '',

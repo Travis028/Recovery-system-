@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, BarChart3, Building2, ChevronRight, FolderOpen, Loader2, Scale, ShieldAlert, ShieldCheck, UserCog, Users } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useResource from '@/hooks/useResource';
 import PageHeader from '@/components/PageHeader';
 import StatCard from '@/components/StatCard';
@@ -21,11 +21,11 @@ export default function AdminDashboard({ user }) {
   const { data, loading, error, reload } = useResource(
     function () {
       return Promise.all([
-        base44.functions.invoke('statistics'),
-        base44.functions.invoke('securityAlerts'),
-        base44.entities.User.count({ ldrs_role: 'Officer', approved: false }),
-        base44.entities.PickupPoint.count({ verified: false, active: true }),
-        base44.entities.DataRequest.count({ status: 'Open' }),
+        api.functions.invoke('statistics'),
+        api.functions.invoke('securityAlerts'),
+        api.entities.User.count({ ldrs_role: 'Officer', approved: false }),
+        api.entities.PickupPoint.count({ verified: false, active: true }),
+        api.entities.DataRequest.count({ status: 'Open' }),
       ]);
     },
     [user.id],
@@ -34,7 +34,7 @@ export default function AdminDashboard({ user }) {
   const checkChain = async function () {
     setChain({ checking: true });
     try {
-      setChain(await base44.functions.invoke('verifyAuditChain'));
+      setChain(await api.functions.invoke('verifyAuditChain'));
     } catch (checkError) {
       setChain(null);
       toast({ tone: 'danger', title: 'The audit trail could not be checked', description: checkError.message });

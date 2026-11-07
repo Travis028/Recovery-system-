@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser, { sessionHasEnded } from '@/hooks/useLdrsUser';
 import useIdleLogout from '@/hooks/useIdleLogout';
 import { navSectionsForRole } from '@/lib/nav';
@@ -35,7 +35,7 @@ export default function AppLayout() {
   const sections = navSectionsForRole(role);
 
   const handleLogout = function () {
-    base44.auth.logout('/login');
+    api.auth.logout('/login');
   };
 
   return (

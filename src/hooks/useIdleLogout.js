@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 
 const IDLE_MINUTES = 15;
 
@@ -16,7 +16,7 @@ export default function useIdleLogout(enabled) {
             const reset = function () {
                 if (timer) clearTimeout(timer);
                 timer = setTimeout(function () {
-                    base44.auth.logout('/login');
+                    api.auth.logout('/login');
                 }, IDLE_MINUTES * 60 * 1000);
             };
 

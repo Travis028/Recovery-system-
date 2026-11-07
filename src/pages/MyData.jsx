@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import PageHeader from '@/components/PageHeader';
 import PhoneVerification from '@/components/security/PhoneVerification';
@@ -24,7 +24,7 @@ function MyDataContent() {
   const [busy, setBusy] = useState(false);
 
   const load = function () {
-    return base44.entities.DataRequest.filter({ owner_user_id: user.id }, { sort: '-created_date' })
+    return api.entities.DataRequest.filter({ owner_user_id: user.id }, { sort: '-created_date' })
       .then(setRequests)
       .catch(function (error) {
         toast({ tone: 'danger', title: 'Your requests could not be loaded', description: error.message });
@@ -35,7 +35,7 @@ function MyDataContent() {
 
   const download = async function () {
     try {
-      const data = await base44.functions.invoke('exportMyData');
+      const data = await api.functions.invoke('exportMyData');
       downloadText('my-ldrs-data.json', JSON.stringify(data, null, 2), 'application/json');
       toast({ tone: 'success', title: 'Your data was downloaded' });
     } catch (downloadError) {
@@ -47,7 +47,7 @@ function MyDataContent() {
     event.preventDefault();
     setBusy(true);
     try {
-      await base44.entities.DataRequest.create({ owner_user_id: user.id, request_type: type, details: details.trim(), status: 'Open' });
+      await api.entities.DataRequest.create({ owner_user_id: user.id, request_type: type, details: details.trim(), status: 'Open' });
       await logAction({ action: AUDIT_ACTIONS.DATA_REQUEST, details: type + ' request submitted', user });
       setDetails('');
       toast({ tone: 'success', title: 'Request sent', description: 'An administrator will respond. You can follow it here.' });
@@ -61,7 +61,7 @@ function MyDataContent() {
 
   const setLanguage = async function (language) {
     try {
-      await base44.auth.updateMe({ language });
+      await api.auth.updateMe({ language });
       await reload();
       toast({ tone: 'success', title: language === 'sw' ? 'Ujumbe utatumwa kwa Kiswahili' : 'Messages will be sent in English' });
     } catch (languageError) {

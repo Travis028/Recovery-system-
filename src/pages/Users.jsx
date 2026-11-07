@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Lock, Power, ShieldCheck, ShieldOff, Unlock, Users as UsersIcon } from 'lucide-react';
 import RowActions from '@/components/data-table/RowActions';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import useResource from '@/hooks/useResource';
 import PageHeader from '@/components/PageHeader';
@@ -43,7 +43,7 @@ function UsersContent() {
   const { toast } = useToast();
   const [filter, setFilter] = useState('all');
   const { data, loading, error, reload } = useResource(function () {
-    return Promise.all([base44.entities.User.list('-created_date'), base44.entities.PickupPoint.list('name')]);
+    return Promise.all([api.entities.User.list('-created_date'), api.entities.PickupPoint.list('name')]);
   }, []);
 
   if (loading && !data) return <SkeletonRows label="Loading accounts" />;
@@ -62,7 +62,7 @@ function UsersContent() {
 
   const change = async function (target, changes, description) {
     try {
-      await base44.entities.User.update(target.id, changes);
+      await api.entities.User.update(target.id, changes);
       await logAction({ action: AUDIT_ACTIONS.USER_CHANGE, details: description + ' — ' + target.email, user: me });
       toast({ tone: 'success', title: 'Account updated', description });
       reload();

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import Loader from '@/components/Loader';
 import EmptyState from '@/components/EmptyState';
@@ -28,14 +28,14 @@ function HandoverReceiptContent() {
       const load = async function () {
         setLoading(true);
         try {
-          const record = await base44.entities.Handover.get(handoverId);
-          const doc = await base44.entities.Document.get(record.document_id);
-          const matched = await base44.entities.Match.get(record.match_id).catch(function () {
+          const record = await api.entities.Handover.get(handoverId);
+          const doc = await api.entities.Document.get(record.document_id);
+          const matched = await api.entities.Match.get(record.match_id).catch(function () {
             return null;
           });
           let station = null;
           if (doc.pickup_point_id) {
-            station = await base44.entities.PickupPoint.get(doc.pickup_point_id).catch(function () {
+            station = await api.entities.PickupPoint.get(doc.pickup_point_id).catch(function () {
               return null;
             });
           }
@@ -43,7 +43,7 @@ function HandoverReceiptContent() {
           if (record.officer_user_id === user.id) {
             officer = user.full_name || user.email || officer;
           } else {
-            const officerRecord = await base44.entities.User.get(record.officer_user_id).catch(function () {
+            const officerRecord = await api.entities.User.get(record.officer_user_id).catch(function () {
               return null;
             });
             if (officerRecord) officer = officerRecord.full_name || officerRecord.email || officer;

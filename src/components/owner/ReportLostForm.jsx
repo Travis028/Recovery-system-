@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import FormField from '@/components/ui/form-field';
@@ -55,7 +55,7 @@ export default function ReportLostForm({ user }) {
     setError('');
     try {
       // Checked on the server: verified phone, consent, number format, report limit per phone.
-      const result = await base44.functions.invoke('submitLossReport', {
+      const result = await api.functions.invoke('submitLossReport', {
         document_type: form.document_type,
         owner_name: form.owner_name.trim(),
         document_number: form.document_number.trim(),

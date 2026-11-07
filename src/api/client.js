@@ -1,9 +1,9 @@
 /**
- * Local stand-in for the Base44 SDK the original code was written against
- * (`base44.entities.X.filter(...)`, `base44.auth.me()`, `base44.integrations.Core...`).
+ * The API the screens talk to: `api.entities.X.filter(...)`, `api.auth.me()`,
+ * `api.functions.invoke(name, args)` and `api.integrations.Core` for private files. The call
+ * shapes follow the Base44 SDK the first version was written for.
  *
- * It keeps the same call shapes so the existing pages run unchanged, and behaves like a
- * small server: every call is checked against the signed-in user's role (api/permissions.js),
+ * It behaves like a small server: every call is checked against the signed-in user's role (api/permissions.js),
  * passwords are hashed, accounts lock after repeated failures, officers and admins use a
  * second login step, images are encrypted, and the audit trail is append-only and hash-linked.
  *
@@ -101,11 +101,9 @@ export function revokeSessionsFor(userId) {
 
 /* ---------- Result lists ---------- */
 
-// Base44 returns either arrays or { items } pages depending on the call; the original code
-// uses both shapes, so lists are arrays that also expose .items and .total.
+// Lists are plain arrays; .total carries the count before skip and limit were applied.
 function page(rows, total) {
   const list = rows.slice();
-  list.items = list;
   list.total = total === undefined ? rows.length : total;
   return list;
 }
@@ -550,9 +548,9 @@ function createClient(getActor) {
   return client;
 }
 
-export const base44 = createClient(currentActor);
+export const api = createClient(currentActor);
 export const serverClient = createClient(function () {
   return SYSTEM;
 });
 
-export default base44;
+export default api;

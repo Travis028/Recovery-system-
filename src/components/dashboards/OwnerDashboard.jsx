@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BellRing, ClipboardCheck, FileSearch, FileWarning, KeyRound, ShieldCheck } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useResource from '@/hooks/useResource';
 import PageHeader from '@/components/PageHeader';
 import StatCard from '@/components/StatCard';
@@ -17,17 +17,17 @@ import { documentTypeLabel, formatDate, formatDateTime, maskDocumentNumber } fro
 
 async function loadOwnerDashboard(userId) {
   const [reports, matches, alerts, counts, points, codes, claims] = await Promise.all([
-    base44.entities.LossReport.filter({ owner_user_id: userId }, { sort: '-created_date', limit: 10 }),
-    base44.entities.Match.filter({ owner_user_id: userId }, { sort: '-created_date', limit: 10 }),
-    base44.entities.Notification.filter({ user_id: userId }, { sort: '-created_date', limit: 3 }),
+    api.entities.LossReport.filter({ owner_user_id: userId }, { sort: '-created_date', limit: 10 }),
+    api.entities.Match.filter({ owner_user_id: userId }, { sort: '-created_date', limit: 10 }),
+    api.entities.Notification.filter({ user_id: userId }, { sort: '-created_date', limit: 3 }),
     Promise.all([
-      base44.entities.LossReport.count({ owner_user_id: userId }),
-      base44.entities.Match.count({ owner_user_id: userId, match_status: { $in: ['Confirmed', 'Returned'] } }),
-      base44.entities.Notification.count({ user_id: userId }),
+      api.entities.LossReport.count({ owner_user_id: userId }),
+      api.entities.Match.count({ owner_user_id: userId, match_status: { $in: ['Confirmed', 'Returned'] } }),
+      api.entities.Notification.count({ user_id: userId }),
     ]),
-    base44.entities.PickupPoint.filter({ active: true }, { sort: 'name', limit: 100 }),
-    base44.entities.OtpCode.filter({ owner_user_id: userId, used: false }, { sort: '-created_date', limit: 50 }),
-    base44.entities.Claim.filter({ owner_user_id: userId }, { sort: '-created_date', limit: 10 }),
+    api.entities.PickupPoint.filter({ active: true }, { sort: 'name', limit: 100 }),
+    api.entities.OtpCode.filter({ owner_user_id: userId, used: false }, { sort: '-created_date', limit: 50 }),
+    api.entities.Claim.filter({ owner_user_id: userId }, { sort: '-created_date', limit: 10 }),
   ]);
 
   const documentIds = matches.map(function (match) {
@@ -35,7 +35,7 @@ async function loadOwnerDashboard(userId) {
   });
   const documentsById = {};
   if (documentIds.length) {
-    (await base44.entities.Document.filter({ id: { $in: documentIds } })).forEach(function (doc) {
+    (await api.entities.Document.filter({ id: { $in: documentIds } })).forEach(function (doc) {
       documentsById[doc.id] = doc;
     });
   }

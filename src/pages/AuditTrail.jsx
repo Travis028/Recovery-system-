@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Download, Link2, Loader2, ScrollText, ShieldCheck } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useResource from '@/hooks/useResource';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
@@ -23,7 +23,7 @@ function AuditContent({ chain }) {
   // Verifying the chain writes an entry of its own, so the list reloads after each check.
   const { data: entries, loading, error, reload } = useResource(
     function () {
-      return base44.entities.AuditLog.list('-seq');
+      return api.entities.AuditLog.list('-seq');
     },
     [chain],
   );
@@ -42,7 +42,7 @@ function AuditContent({ chain }) {
       }),
     );
     downloadText('ldrs-audit-' + new Date().toISOString().slice(0, 10) + '.csv', toCsv(table), 'text/csv;charset=utf-8');
-    base44.entities.AuditLog.create({ action: 'Data export', details: 'Audit trail exported (' + rows.length + ' entries)' });
+    api.entities.AuditLog.create({ action: 'Data export', details: 'Audit trail exported (' + rows.length + ' entries)' });
   };
 
   const columns = [
@@ -120,7 +120,7 @@ export default function AuditTrail() {
   const verify = async function () {
     setChecking(true);
     try {
-      setChain(await base44.functions.invoke('verifyAuditChain'));
+      setChain(await api.functions.invoke('verifyAuditChain'));
     } catch (error) {
       toast({ tone: 'danger', title: 'The chain could not be checked', description: error.message });
     } finally {

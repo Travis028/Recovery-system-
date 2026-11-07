@@ -1,6 +1,6 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ShieldCheck, ShieldX } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useResource from '@/hooks/useResource';
 import Brand from '@/components/layout/Brand';
 import Loader from '@/components/Loader';
@@ -15,7 +15,7 @@ export default function VerifyReceipt() {
   const hash = params.get('h') || '';
   const { data: result, loading } = useResource(
     function () {
-      return base44.functions.invoke('verifyReceipt', { id: handoverId, h: hash }).catch(function () {
+      return api.functions.invoke('verifyReceipt', { id: handoverId, h: hash }).catch(function () {
         return { valid: false };
       });
     },

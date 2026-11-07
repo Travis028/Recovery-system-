@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { maskDocumentNumber } from '@/lib/ldrs';
 
 /**
@@ -7,8 +7,8 @@ import { maskDocumentNumber } from '@/lib/ldrs';
  * Kiswahili from the owner's language setting, so callers pass both versions.
  */
 export async function sendOwnerNotification({ userId, message, messageSw, smsMessage, smsMessageSw, client }) {
-  const api = client || base44;
-  return api.functions.invoke('notifyOwner', { userId, message, messageSw, smsMessage, smsMessageSw });
+  const source = client || api;
+  return source.functions.invoke('notifyOwner', { userId, message, messageSw, smsMessage, smsMessageSw });
 }
 
 export function buildFoundDocumentMessage({ documentType, documentNumber, pickupPointName, referenceCode, lang }) {

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Archive, ClipboardCheck, FilePlus, FolderOpen, KeyRound } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useResource from '@/hooks/useResource';
 import PageHeader from '@/components/PageHeader';
 import StatCard from '@/components/StatCard';
@@ -36,12 +36,12 @@ export default function OfficerDashboard({ user }) {
   const { data, loading, error, reload } = useResource(
     function () {
       return Promise.all([
-        base44.entities.Document.filter({}, { sort: '-created_date', limit: 200 }),
-        base44.entities.Match.count({ match_status: 'Pending' }),
-        base44.entities.Match.count({ match_status: 'Confirmed' }),
-        base44.entities.Claim.count({ status: 'Pending' }),
+        api.entities.Document.filter({}, { sort: '-created_date', limit: 200 }),
+        api.entities.Match.count({ match_status: 'Pending' }),
+        api.entities.Match.count({ match_status: 'Confirmed' }),
+        api.entities.Claim.count({ status: 'Pending' }),
         user.pickup_point_id
-          ? base44.entities.PickupPoint.get(user.pickup_point_id).catch(function () {
+          ? api.entities.PickupPoint.get(user.pickup_point_id).catch(function () {
               return null;
             })
           : null,

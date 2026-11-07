@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import Loader from '@/components/Loader';
@@ -34,8 +34,8 @@ function MatchReviewContent() {
       let documentIds = null;
 
       if (stationScoped) {
-        const stationDocuments = await base44.entities.Document.filter({ pickup_point_id: user.pickup_point_id });
-        documentIds = (stationDocuments.items || stationDocuments || []).map(function (doc) {
+        const stationDocuments = await api.entities.Document.filter({ pickup_point_id: user.pickup_point_id });
+        documentIds = stationDocuments.map(function (doc) {
           return doc.id;
         });
         if (!documentIds.length) {
@@ -49,11 +49,11 @@ function MatchReviewContent() {
 
       const scope = documentIds ? { document_id: { $in: documentIds } } : {};
       const results = await Promise.all([
-        base44.entities.Match.filter({ ...scope, match_status: 'Pending' }, { sort: '-created_date', limit: 50 }),
-        base44.entities.Match.filter({ ...scope, match_status: 'Confirmed' }, { sort: '-created_date', limit: 50 }),
+        api.entities.Match.filter({ ...scope, match_status: 'Pending' }, { sort: '-created_date', limit: 50 }),
+        api.entities.Match.filter({ ...scope, match_status: 'Confirmed' }, { sort: '-created_date', limit: 50 }),
       ]);
-      const pendingItems = results[0].items || [];
-      const confirmedItems = results[1].items || [];
+      const pendingItems = results[0];
+      const confirmedItems = results[1];
       const all = pendingItems.concat(confirmedItems);
 
       const docIds = [...new Set(all.map((match) => match.document_id).filter(Boolean))];
@@ -61,28 +61,28 @@ function MatchReviewContent() {
 
       const docMap = {};
       if (docIds.length) {
-        const docList = await base44.entities.Document.filter({ id: { $in: docIds } });
-        (docList.items || []).forEach(function (doc) {
+        const docList = await api.entities.Document.filter({ id: { $in: docIds } });
+        docList.forEach(function (doc) {
           docMap[doc.id] = doc;
         });
       }
 
       const reportMap = {};
       if (reportIds.length) {
-        const reportList = await base44.entities.LossReport.filter({ id: { $in: reportIds } });
-        (reportList.items || []).forEach(function (report) {
+        const reportList = await api.entities.LossReport.filter({ id: { $in: reportIds } });
+        reportList.forEach(function (report) {
           reportMap[report.id] = report;
         });
       }
 
       const pointMap = {};
-      const pointList = await base44.entities.PickupPoint.list();
-      (Array.isArray(pointList) ? pointList : []).forEach(function (point) {
+      const pointList = await api.entities.PickupPoint.list();
+      pointList.forEach(function (point) {
         pointMap[point.id] = point;
       });
 
-      const claimPage = await base44.entities.Claim.filter({ status: 'Pending' }, { sort: '-created_date', limit: 50 });
-      const claimItems = (claimPage.items || []).filter(function (claim) {
+      const claimPage = await api.entities.Claim.filter({ status: 'Pending' }, { sort: '-created_date', limit: 50 });
+      const claimItems = claimPage.filter(function (claim) {
         return !documentIds || documentIds.indexOf(claim.document_id) >= 0;
       });
       const claimDocs = {};
@@ -90,7 +90,7 @@ function MatchReviewContent() {
         claimItems.map(async function (claim) {
           if (!claim.document_id) return;
           try {
-            claimDocs[claim.document_id] = await base44.entities.Document.get(claim.document_id);
+            claimDocs[claim.document_id] = await api.entities.Document.get(claim.document_id);
           } catch (docError) {
             console.error('Claimed document could not be loaded', docError);
           }
@@ -122,7 +122,7 @@ function MatchReviewContent() {
   const handleConfirm = async function (match) {
     setBusyId(match.id);
     try {
-      await base44.functions.invoke('confirmMatch', { match_id: match.id });
+      await api.functions.invoke('confirmMatch', { match_id: match.id });
       await load();
       toast({ tone: 'success', title: 'Match confirmed', description: 'The owner has been alerted with the pickup point and reference code.' });
     } catch (confirmError) {
@@ -135,7 +135,7 @@ function MatchReviewContent() {
   const handleReject = async function (match) {
     setBusyId(match.id);
     try {
-      await base44.functions.invoke('rejectMatch', { match_id: match.id });
+      await api.functions.invoke('rejectMatch', { match_id: match.id });
       await load();
       toast({ tone: 'success', title: 'Match rejected', description: 'The document stays available for other reports.' });
     } catch (rejectError) {
@@ -148,7 +148,7 @@ function MatchReviewContent() {
   const decideClaim = async function (claim, decision) {
     setBusyId('claim-' + claim.id);
     try {
-      await base44.functions.invoke(decision === 'approve' ? 'approveClaim' : 'rejectClaim', { claim_id: claim.id });
+      await api.functions.invoke(decision === 'approve' ? 'approveClaim' : 'rejectClaim', { claim_id: claim.id });
       await load();
       toast(
         decision === 'approve'
@@ -165,7 +165,7 @@ function MatchReviewContent() {
   const handleNotify = async function (match) {
     setBusyId(match.id);
     try {
-      await base44.functions.invoke('sendCollectionReminder', { match_id: match.id });
+      await api.functions.invoke('sendCollectionReminder', { match_id: match.id });
       toast({ tone: 'success', title: 'Reminder sent', description: 'The owner received the pickup point and reference code again.' });
     } catch (notifyError) {
       toast({ tone: 'danger', title: 'Could not send the reminder', description: notifyError.message });

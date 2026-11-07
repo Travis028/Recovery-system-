@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ChevronRight, FilePlus, FolderOpen } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import useResource from '@/hooks/useResource';
 import PageHeader from '@/components/PageHeader';
@@ -24,8 +24,8 @@ function DocumentsContent() {
       const filter = {};
       if (role === 'Finder') filter.finder_user_id = user.id;
       const [documents, points] = await Promise.all([
-        base44.entities.Document.filter(filter, { sort: '-created_date', limit: 500 }),
-        base44.entities.PickupPoint.list(),
+        api.entities.Document.filter(filter, { sort: '-created_date', limit: 500 }),
+        api.entities.PickupPoint.list(),
       ]);
       const pointNames = {};
       points.forEach(function (point) {

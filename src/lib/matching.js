@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { normalizeId, nameSimilarity, generateReferenceCode, maskDocumentNumber } from '@/lib/ldrs';
 import { sendOwnerNotification, foundDocumentAlert } from '@/lib/notifications';
 import { logAction, AUDIT_ACTIONS } from '@/lib/audit';
@@ -29,12 +29,12 @@ function alreadyMatched(existing, documentId, reportId) {
  * server client.
  */
 export async function createMatchesForDocument({ doc, pickupPoint, actor, client }) {
-  const api = client || base44;
-  const openReports = await api.entities.LossReport.filter({
+  const source = client || api;
+  const openReports = await source.entities.LossReport.filter({
     document_type: doc.document_type,
     status: 'Open',
   });
-  const existing = await api.entities.Match.filter({ document_id: doc.id });
+  const existing = await source.entities.Match.filter({ document_id: doc.id });
 
   const created = [];
 
@@ -43,7 +43,7 @@ export async function createMatchesForDocument({ doc, pickupPoint, actor, client
     if (!result || alreadyMatched(existing, doc.id, report.id)) continue;
 
     const referenceCode = result.matchType === 'Exact' ? generateReferenceCode() : null;
-    const match = await api.entities.Match.create({
+    const match = await source.entities.Match.create({
       document_id: doc.id,
       loss_report_id: report.id,
       owner_user_id: report.owner_user_id,
@@ -54,7 +54,7 @@ export async function createMatchesForDocument({ doc, pickupPoint, actor, client
     });
 
     if (result.matchType === 'Exact') {
-      await api.entities.LossReport.update(report.id, { status: 'Matched' });
+      await source.entities.LossReport.update(report.id, { status: 'Matched' });
       await sendOwnerNotification({
         client: api,
         userId: report.owner_user_id,
@@ -83,29 +83,28 @@ export async function createMatchesForDocument({ doc, pickupPoint, actor, client
  * being held are checked straight away, so a document handed in earlier is not missed.
  */
 export async function matchLossReportAgainstHeldDocuments({ report, actor, client }) {
-  const api = client || base44;
-  const held = await api.entities.Document.filter({
+  const source = client || api;
+  const held = await source.entities.Document.filter({
     document_type: report.document_type,
     status: { $in: ['Found', 'Matched'] },
   });
-  const items = held.items || held || [];
-  if (!items.length) return [];
+  if (!held.length) return [];
 
-  const points = await api.entities.PickupPoint.list();
+  const points = await source.entities.PickupPoint.list();
   const pointMap = {};
-  (Array.isArray(points) ? points : []).forEach(function (point) {
+  points.forEach(function (point) {
     pointMap[point.id] = point;
   });
 
   const created = [];
 
-  for (const doc of items) {
+  for (const doc of held) {
     const result = classify(report.document_number, doc.document_number, report.owner_name, doc.owner_name);
     if (!result) continue;
 
     const point = pointMap[doc.pickup_point_id] || null;
     const referenceCode = result.matchType === 'Exact' ? generateReferenceCode() : null;
-    const match = await api.entities.Match.create({
+    const match = await source.entities.Match.create({
       document_id: doc.id,
       loss_report_id: report.id,
       owner_user_id: report.owner_user_id,
@@ -116,8 +115,8 @@ export async function matchLossReportAgainstHeldDocuments({ report, actor, clien
     });
 
     if (result.matchType === 'Exact') {
-      await api.entities.Document.update(doc.id, { status: 'Notified' });
-      await api.entities.LossReport.update(report.id, { status: 'Matched' });
+      await source.entities.Document.update(doc.id, { status: 'Notified' });
+      await source.entities.LossReport.update(report.id, { status: 'Matched' });
       await sendOwnerNotification({
         client: api,
         userId: report.owner_user_id,
@@ -134,7 +133,7 @@ export async function matchLossReportAgainstHeldDocuments({ report, actor, clien
         user: actor,
       });
     } else if (doc.status === 'Found') {
-      await api.entities.Document.update(doc.id, { status: 'Matched' });
+      await source.entities.Document.update(doc.id, { status: 'Matched' });
     }
 
     created.push({ match, document: doc, pickupPoint: point });

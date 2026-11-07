@@ -4,7 +4,7 @@
  * Images are encrypted with AES-256-GCM before they are stored in IndexedDB. The key is
  * generated as a non-extractable CryptoKey, so page scripts can use it but cannot read
  * it out. Images are never placed in a public folder; they are only decrypted for a user
- * whose role allows them to see the record (checked in base44Client).
+ * whose role allows them to see the record (checked in api/client.js).
  *
  * Production: object storage outside the web folder, encrypted at rest with a key held
  * in a key-management service, and short-lived signed URLs.

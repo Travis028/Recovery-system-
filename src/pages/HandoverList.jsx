@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { KeyRound, ReceiptText } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useResource from '@/hooks/useResource';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
@@ -12,13 +12,13 @@ import { documentTypeLabel, formatDateTime, maskDocumentNumber, maskName } from 
 
 async function loadHandovers() {
   const [waiting, done] = await Promise.all([
-    base44.entities.Match.filter({ match_status: 'Confirmed' }, { sort: '-created_date', limit: 200 }),
-    base44.entities.Handover.filter({}, { sort: '-created_date', limit: 500 }),
+    api.entities.Match.filter({ match_status: 'Confirmed' }, { sort: '-created_date', limit: 200 }),
+    api.entities.Handover.filter({}, { sort: '-created_date', limit: 500 }),
   ]);
   const ids = [...new Set(waiting.map((match) => match.document_id).concat(done.map((handover) => handover.document_id)))];
   const documents = {};
   if (ids.length) {
-    (await base44.entities.Document.filter({ id: { $in: ids } })).forEach(function (doc) {
+    (await api.entities.Document.filter({ id: { $in: ids } })).forEach(function (doc) {
       documents[doc.id] = doc;
     });
   }

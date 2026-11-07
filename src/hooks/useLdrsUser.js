@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { resolveRole } from '@/lib/ldrs';
 
 /**
@@ -42,7 +42,7 @@ function publish(user) {
 
 export function reloadLdrsUser() {
   if (pending) return pending;
-  pending = base44.auth
+  pending = api.auth
     .me()
     .catch(function (error) {
       if (error && error.status !== 401) console.error('Could not load the signed-in user', error);

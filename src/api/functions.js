@@ -8,7 +8,7 @@ import { roleOf, shape, SYSTEM } from './permissions';
 import { listAudit, verifyChain, purgeAuditOlderThan, exportAuditStore, importAuditStore } from './auditStore';
 import { deletePrivateFile } from './fileStore';
 import { randomDigits, randomHex, sha256Hex, safeEqual } from './crypto';
-import { checkChallenge, sendChallengeSms } from './base44Client';
+import { checkChallenge, sendChallengeSms } from './client';
 import { assertStation, audit, notifyUser, pointName, requireApprovedStaff, requireRole } from './serverHelpers';
 import { REVIEW_FUNCTIONS } from './reviewFunctions';
 import {

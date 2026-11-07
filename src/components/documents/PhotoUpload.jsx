@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import PrivateImage from '@/components/PrivateImage';
 import { prepareDocumentPhoto } from '@/lib/image';
@@ -23,7 +23,7 @@ export default function PhotoUpload({ id = 'photo', fileUri, onChange, helper, i
     setError('');
     try {
       const prepared = await prepareDocumentPhoto(file);
-      const uploaded = await base44.integrations.Core.UploadPrivateFile({ file: prepared.file });
+      const uploaded = await api.integrations.Core.UploadPrivateFile({ file: prepared.file });
       onChange(uploaded.file_uri, { sha256: prepared.sha256, phash: prepared.phash, file: prepared.file });
     } catch (uploadError) {
       console.error('Photograph upload failed', uploadError);

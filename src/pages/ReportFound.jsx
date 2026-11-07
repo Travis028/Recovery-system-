@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import PageHeader from '@/components/PageHeader';
 import PhotoUpload from '@/components/documents/PhotoUpload';
@@ -33,7 +33,7 @@ function ReportFoundContent() {
   const [result, setResult] = useState(null);
 
   useEffect(function () {
-    base44.functions.invoke('listPublicPickupPoints').catch(function () { return []; }).then(function (list) {
+    api.functions.invoke('listPublicPickupPoints').catch(function () { return []; }).then(function (list) {
       setPoints(list);
       if (role === 'Officer' && user.pickup_point_id) {
         setForm(function (previous) {
@@ -92,7 +92,7 @@ function ReportFoundContent() {
     setSubmitting(true);
     setError('');
     try {
-      const response = await base44.functions.invoke('registerFoundDocument', {
+      const response = await api.functions.invoke('registerFoundDocument', {
         ...form,
         image_url: photo.uri,
         image_sha256: photo.sha256,

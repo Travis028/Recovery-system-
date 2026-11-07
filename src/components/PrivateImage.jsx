@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { ImageOff, Lock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +17,7 @@ export default function PrivateImage({ fileUri, className, alt }) {
         return undefined;
       }
       setState('loading');
-      base44.integrations.Core.CreateFileSignedUrl({ file_uri: fileUri })
+      api.integrations.Core.CreateFileSignedUrl({ file_uri: fileUri })
         .then(function (result) {
           objectUrl = result.signed_url;
           if (!active) return URL.revokeObjectURL(objectUrl);

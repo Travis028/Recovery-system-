@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { BellRing, Building2, FileWarning, ShieldCheck } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import useResource from '@/hooks/useResource';
 import PageHeader from '@/components/PageHeader';
@@ -15,15 +15,15 @@ import { DELIVERY_STATUS_LABELS, documentTypeLabel, formatDate, formatDateTime, 
 
 async function loadAlerts(userId) {
   const [alerts, matches, reports, points] = await Promise.all([
-    base44.entities.Notification.filter({ user_id: userId }, { sort: '-created_date', limit: 50 }),
-    base44.entities.Match.filter({ owner_user_id: userId, match_status: { $in: ['Confirmed', 'Returned'] } }, { sort: '-created_date', limit: 50 }),
-    base44.entities.LossReport.filter({ owner_user_id: userId }, { sort: '-created_date', limit: 50 }),
-    base44.entities.PickupPoint.filter({ active: true }, { sort: 'name', limit: 100 }),
+    api.entities.Notification.filter({ user_id: userId }, { sort: '-created_date', limit: 50 }),
+    api.entities.Match.filter({ owner_user_id: userId, match_status: { $in: ['Confirmed', 'Returned'] } }, { sort: '-created_date', limit: 50 }),
+    api.entities.LossReport.filter({ owner_user_id: userId }, { sort: '-created_date', limit: 50 }),
+    api.entities.PickupPoint.filter({ active: true }, { sort: 'name', limit: 100 }),
   ]);
   const documentIds = matches.map((match) => match.document_id).filter(Boolean);
   const documentsById = {};
   if (documentIds.length) {
-    (await base44.entities.Document.filter({ id: { $in: documentIds } })).forEach(function (doc) {
+    (await api.entities.Document.filter({ id: { $in: documentIds } })).forEach(function (doc) {
       documentsById[doc.id] = doc;
     });
   }

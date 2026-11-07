@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { KeyRound, Loader2, LockKeyhole, UserPlus } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { reloadLdrsUser } from '@/hooks/useLdrsUser';
 import Brand from '@/components/layout/Brand';
 import DemoAccounts from '@/components/auth/DemoAccounts';
@@ -92,13 +92,13 @@ export default function Login() {
   );
 
   useEffect(function () {
-    base44.auth
+    api.auth
       .me()
       .then(function () {
         setSignedIn(true);
       })
       .catch(function () {});
-    base44.functions
+    api.functions
       .invoke('listPublicPickupPoints')
       .then(setPoints)
       .catch(function () {});
@@ -137,7 +137,7 @@ export default function Login() {
     event.preventDefault();
     if (!loginFields.submit()) return;
     run(async function () {
-      const result = await base44.auth.login({ email, password });
+      const result = await api.auth.login({ email, password });
       setPassword('');
       if (result.status === 'two_step') {
         setChallenge(result);
@@ -153,7 +153,7 @@ export default function Login() {
     event.preventDefault();
     if (!codeFields.submit()) return;
     run(async function () {
-      await base44.auth.verifyTwoStep({ challenge_id: challenge.challenge_id, code });
+      await api.auth.verifyTwoStep({ challenge_id: challenge.challenge_id, code });
       await finish();
     });
   };
@@ -162,7 +162,7 @@ export default function Login() {
     event.preventDefault();
     if (!registerFields.submit()) return;
     run(async function () {
-      const result = await base44.auth.register(reg);
+      const result = await api.auth.register(reg);
       setEmail(reg.email);
       go('login');
       setInfo(
@@ -177,7 +177,7 @@ export default function Login() {
     event.preventDefault();
     if (!forgotFields.submit()) return;
     run(async function () {
-      const result = await base44.auth.requestPasswordReset({ email });
+      const result = await api.auth.requestPasswordReset({ email });
       setChallenge(result);
       go('reset');
       setInfo('If an account with a phone number exists for this email, a reset code has been sent by SMS.');
@@ -188,7 +188,7 @@ export default function Login() {
     event.preventDefault();
     if (!resetFields.submit()) return;
     run(async function () {
-      await base44.auth.resetPassword({ challenge_id: challenge.challenge_id, code, password });
+      await api.auth.resetPassword({ challenge_id: challenge.challenge_id, code, password });
       setPassword('');
       go('login');
       setInfo('Password changed. Sign in with your new password.');

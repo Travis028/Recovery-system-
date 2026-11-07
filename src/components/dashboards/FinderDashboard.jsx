@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Building2, CheckCircle2, FilePlus, FolderOpen, HeartHandshake } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useResource from '@/hooks/useResource';
 import PageHeader from '@/components/PageHeader';
 import StatCard from '@/components/StatCard';
@@ -15,8 +15,8 @@ export default function FinderDashboard({ user }) {
   const { data, loading, error, reload } = useResource(
     function () {
       return Promise.all([
-        base44.entities.Document.filter({ finder_user_id: user.id }, { sort: '-created_date', limit: 50 }),
-        base44.entities.PickupPoint.list(),
+        api.entities.Document.filter({ finder_user_id: user.id }, { sort: '-created_date', limit: 50 }),
+        api.entities.PickupPoint.list(),
       ]);
     },
     [user.id],

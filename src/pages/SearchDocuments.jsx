@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
@@ -28,7 +28,7 @@ function SearchContent() {
   const [claimDoc, setClaimDoc] = useState(null);
 
   useEffect(function () {
-    base44.functions.invoke('searchStatus').then(setStatus).catch(function () {});
+    api.functions.invoke('searchStatus').then(setStatus).catch(function () {});
   }, []);
 
   if (!user.phone_verified) {
@@ -42,7 +42,7 @@ function SearchContent() {
 
   const askCaptcha = async function () {
     try {
-      setCaptcha(await base44.functions.invoke('getCaptcha'));
+      setCaptcha(await api.functions.invoke('getCaptcha'));
     } catch (captchaError) {
       setError(captchaError.message || 'The check question could not be loaded.');
     }
@@ -52,7 +52,7 @@ function SearchContent() {
     setBusy(true);
     setError('');
     try {
-      const response = await base44.functions.invoke('searchFoundDocuments', {
+      const response = await api.functions.invoke('searchFoundDocuments', {
         ...form,
         captcha_id: captchaAnswer ? captchaAnswer.id : undefined,
         captcha_answer: captchaAnswer ? captchaAnswer.answer : undefined,

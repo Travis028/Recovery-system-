@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import PageHeader from '@/components/PageHeader';
 import Loader from '@/components/Loader';
@@ -108,14 +108,14 @@ function StatisticsContent() {
   const { user, role } = useLdrsUser();
   const { toast } = useToast();
   const [showTable, setShowTable] = useState(false);
-  const { data: stats, loading, error, reload } = useResource(() => base44.functions.invoke('statistics'), [user.id]);
+  const { data: stats, loading, error, reload } = useResource(() => api.functions.invoke('statistics'), [user.id]);
 
   if (loading && !stats) return <Loader label="Calculating totals" />;
   if (error) return <ErrorState title="Statistics could not be calculated" error={error} onRetry={reload} />;
 
   const exportCsv = async function () {
     try {
-      const file = await base44.functions.invoke('exportAnonymised');
+      const file = await api.functions.invoke('exportAnonymised');
       downloadText(file.filename, file.csv, 'text/csv;charset=utf-8');
       toast({ tone: 'success', title: 'Export downloaded', description: 'No names, numbers or phone numbers are included. The export was logged.' });
     } catch (exportError) {

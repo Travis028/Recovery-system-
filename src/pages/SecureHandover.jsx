@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Circle, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import PageHeader from '@/components/PageHeader';
 import Loader from '@/components/Loader';
 import EmptyState from '@/components/EmptyState';
@@ -103,19 +103,19 @@ function SecureHandoverContent() {
   );
 
   const loadOtp = async function () {
-    const otpList = await base44.entities.OtpCode.filter({ match_id: matchId }, { sort: '-created_date', limit: 1 });
+    const otpList = await api.entities.OtpCode.filter({ match_id: matchId }, { sort: '-created_date', limit: 1 });
     setOtp(otpList[0] || null);
   };
 
   const load = async function () {
     setLoading(true);
     try {
-      const record = await base44.entities.Match.get(matchId);
+      const record = await api.entities.Match.get(matchId);
       setMatch(record);
-      const doc = await base44.entities.Document.get(record.document_id);
+      const doc = await api.entities.Document.get(record.document_id);
       setDocument(doc);
       if (doc.pickup_point_id) {
-        setPoint(await base44.entities.PickupPoint.get(doc.pickup_point_id).catch(function () { return null; }));
+        setPoint(await api.entities.PickupPoint.get(doc.pickup_point_id).catch(function () { return null; }));
       }
       await loadOtp();
     } catch (loadError) {
@@ -147,7 +147,7 @@ function SecureHandoverContent() {
     setGenerating(true);
     setError('');
     try {
-      setOtp(await base44.functions.invoke('generateCollectionCode', { match_id: match.id }));
+      setOtp(await api.functions.invoke('generateCollectionCode', { match_id: match.id }));
       setOtpInput('');
     } catch (generateError) {
       setError(generateError.message || 'The collection code could not be created. Please try again.');
@@ -194,7 +194,7 @@ function SecureHandoverContent() {
     setSubmitting(true);
     setError('');
     try {
-      const handover = await base44.functions.invoke('completeHandover', {
+      const handover = await api.functions.invoke('completeHandover', {
         match_id: match.id,
         reference_code: referenceInput,
         document_number: numberInput,

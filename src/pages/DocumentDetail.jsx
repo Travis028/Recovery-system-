@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Archive, KeyRound, RotateCcw } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import PageHeader from '@/components/PageHeader';
 import Loader from '@/components/Loader';
@@ -36,10 +36,10 @@ function DocumentDetailContent() {
 
   const load = async function () {
     try {
-      const record = await base44.entities.Document.get(documentId);
+      const record = await api.entities.Document.get(documentId);
       setDoc(record);
-      setPoint(await base44.entities.PickupPoint.get(record.pickup_point_id).catch(function () { return null; }));
-      setMatches(role === 'Finder' ? [] : await base44.entities.Match.filter({ document_id: documentId }, { sort: '-created_date' }));
+      setPoint(await api.entities.PickupPoint.get(record.pickup_point_id).catch(function () { return null; }));
+      setMatches(role === 'Finder' ? [] : await api.entities.Match.filter({ document_id: documentId }, { sort: '-created_date' }));
       return record;
     } catch {
       setDoc(null);
@@ -76,7 +76,7 @@ function DocumentDetailContent() {
   const setStatus = async function (status) {
     setBusy(true);
     try {
-      await base44.entities.Document.update(doc.id, { status });
+      await api.entities.Document.update(doc.id, { status });
       await logAction({ action: AUDIT_ACTIONS.DOCUMENT_STATUS_CHANGE, details: 'Document ' + doc.id.slice(0, 8) + ' set to ' + status, user });
       toast({ tone: 'success', title: 'Status updated', description: 'The document is now marked ' + status + '.' });
       await load();

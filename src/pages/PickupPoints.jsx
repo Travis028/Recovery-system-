@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BadgeCheck, Building2, Clock, Loader2, MapPin, Pencil, Phone, Plus, Power, ShieldAlert, ShieldOff } from 'lucide-react';
 import RowActions from '@/components/data-table/RowActions';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import useResource from '@/hooks/useResource';
 import PageHeader from '@/components/PageHeader';
@@ -87,7 +87,7 @@ export default function PickupPoints() {
 
   const { data: points, loading, error, reload } = useResource(
     function () {
-      return isAdmin ? base44.entities.PickupPoint.list('name') : base44.functions.invoke('listPublicPickupPoints');
+      return isAdmin ? api.entities.PickupPoint.list('name') : api.functions.invoke('listPublicPickupPoints');
     },
     [user.id, isAdmin],
   );
@@ -119,10 +119,10 @@ export default function PickupPoints() {
         verification_note: form.verification_note.trim(),
       };
       if (editing === 'new') {
-        await base44.entities.PickupPoint.create({ ...data, verified: false, active: true });
+        await api.entities.PickupPoint.create({ ...data, verified: false, active: true });
         await logAction({ action: AUDIT_ACTIONS.PICKUP_POINT_CHANGE, details: 'Pickup point added (unverified): ' + data.name, user });
       } else {
-        await base44.entities.PickupPoint.update(editing.id, data);
+        await api.entities.PickupPoint.update(editing.id, data);
         await logAction({ action: AUDIT_ACTIONS.PICKUP_POINT_CHANGE, details: 'Pickup point edited: ' + data.name, user });
       }
       toast({ tone: 'success', title: editing === 'new' ? 'Pickup point added' : 'Pickup point saved', description: data.name });
@@ -137,7 +137,7 @@ export default function PickupPoints() {
 
   const change = async function (point, changes, description) {
     try {
-      await base44.entities.PickupPoint.update(point.id, changes);
+      await api.entities.PickupPoint.update(point.id, changes);
       await logAction({ action: AUDIT_ACTIONS.PICKUP_POINT_CHANGE, details: description + ': ' + point.name, user });
       toast({ tone: 'success', title: description, description: point.name });
       reload();
