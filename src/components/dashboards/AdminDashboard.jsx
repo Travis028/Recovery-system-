@@ -11,10 +11,12 @@ import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
 
 const LEVEL_TONES = { high: 'danger', medium: 'warning', low: 'neutral' };
 
 export default function AdminDashboard({ user }) {
+  const { toast } = useToast();
   const [chain, setChain] = useState(null);
   const { data, loading, error, reload } = useResource(
     function () {
@@ -31,7 +33,12 @@ export default function AdminDashboard({ user }) {
 
   const checkChain = async function () {
     setChain({ checking: true });
-    setChain(await base44.functions.invoke('verifyAuditChain'));
+    try {
+      setChain(await base44.functions.invoke('verifyAuditChain'));
+    } catch (checkError) {
+      setChain(null);
+      toast({ tone: 'danger', title: 'The audit trail could not be checked', description: checkError.message });
+    }
   };
 
   const header = (

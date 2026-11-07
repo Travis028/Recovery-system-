@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDateTime } from '@/lib/ldrs';
 import { downloadText } from '@/lib/utils';
+import { useToast } from '@/components/ui/use-toast';
 
 const ALERT_ACTIONS = ['Failed login', 'Failed two-step login', 'Account locked', 'Login blocked', 'Collection code rejected', 'Search rate limit reached', 'Rapid uploads flagged'];
 
@@ -125,13 +126,19 @@ function AuditContent({ chain }) {
 }
 
 export default function AuditTrail() {
+  const { toast } = useToast();
   const [chain, setChain] = useState(null);
   const [checking, setChecking] = useState(false);
 
   const verify = async function () {
     setChecking(true);
-    setChain(await base44.functions.invoke('verifyAuditChain'));
-    setChecking(false);
+    try {
+      setChain(await base44.functions.invoke('verifyAuditChain'));
+    } catch (error) {
+      toast({ tone: 'danger', title: 'The chain could not be checked', description: error.message });
+    } finally {
+      setChecking(false);
+    }
   };
 
   return (
