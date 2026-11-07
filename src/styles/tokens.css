@@ -1,0 +1,62 @@
+/*
+ * Design tokens. Colours are stored as HSL channels so Tailwind can add opacity
+ * (for example bg-primary/10). Components use the Tailwind names mapped in
+ * tailwind.config.js, never raw colour values.
+ */
+:root {
+  /* Surfaces and text */
+  --background: 210 20% 98%;
+  --foreground: 215 28% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 28% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 28% 14%;
+  --muted: 210 18% 95%;
+  --muted-foreground: 215 14% 38%;
+  --border: 214 18% 88%;
+  --border-strong: 214 14% 74%;
+  --input: 215 13% 62%;
+  --ring: 191 82% 34%;
+
+  /* Brand */
+  --primary: 191 82% 27%;
+  --primary-hover: 191 84% 22%;
+  --primary-foreground: 0 0% 100%;
+  --primary-subtle: 190 60% 94%;
+  --primary-subtle-foreground: 191 80% 22%;
+
+  --accent: 258 50% 48%;
+  --accent-foreground: 0 0% 100%;
+  --accent-subtle: 258 60% 96%;
+  --accent-subtle-foreground: 258 50% 36%;
+
+  /* Status */
+  --success: 152 62% 30%;
+  --success-foreground: 0 0% 100%;
+  --success-subtle: 145 50% 94%;
+  --success-subtle-foreground: 152 65% 22%;
+  --success-border: 148 40% 78%;
+
+  --warning: 32 90% 38%;
+  --warning-foreground: 0 0% 100%;
+  --warning-subtle: 44 90% 93%;
+  --warning-subtle-foreground: 30 85% 26%;
+  --warning-border: 40 75% 70%;
+
+  --danger: 0 68% 46%;
+  --danger-foreground: 0 0% 100%;
+  --danger-subtle: 0 80% 96%;
+  --danger-subtle-foreground: 0 65% 34%;
+  --danger-border: 0 70% 84%;
+
+  --info: 214 75% 42%;
+  --info-foreground: 0 0% 100%;
+  --info-subtle: 214 85% 95%;
+  --info-subtle-foreground: 214 70% 32%;
+  --info-border: 214 70% 84%;
+
+  /* Charts: a two-series pair that stays apart for colour-blind readers */
+  --chart-1: 199 98% 39%;
+  --chart-2: 32 95% 44%;
+  --chart-grid: 214 18% 91%;
+}
