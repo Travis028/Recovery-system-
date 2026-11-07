@@ -11,6 +11,7 @@ import UserMenu from '@/components/layout/UserMenu';
 import AccountNotices from '@/components/layout/AccountNotices';
 import DemoPhone from '@/components/security/DemoPhone';
 import Loader from '@/components/Loader';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function AppLayout() {
   const { user, role, loading } = useLdrsUser();
@@ -60,9 +61,11 @@ export default function AppLayout() {
         <main id="main-content" tabIndex={-1} className="mx-auto outline-none w-full max-w-content px-page-x pb-24 pt-page-y xl:pb-12 print:max-w-none print:p-0">
           <AccountNotices user={user} role={role} />
           {/* Keeps the menu on screen while the next page's code loads. */}
-          <Suspense fallback={<Loader label="Opening the page" />}>
-            <Outlet />
-          </Suspense>
+          <ErrorBoundary resetKey={pathname} embedded>
+            <Suspense fallback={<Loader label="Opening the page" />}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
 
