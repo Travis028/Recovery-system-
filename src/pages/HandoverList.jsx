@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { KeyRound, ReceiptText } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import useResource from '@/hooks/useResource';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
@@ -130,9 +129,9 @@ function HandoverListContent() {
 
 export default function HandoverList() {
   return (
-    <RoleGuard allow={['Officer', 'Admin']}>
+    <>
       <PageHeader title="Handover" description="Release documents to their owners after checking identity, and reprint receipts." />
       <HandoverListContent />
-    </RoleGuard>
+    </>
   );
 }

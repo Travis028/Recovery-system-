@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Circle, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import Loader from '@/components/Loader';
 import EmptyState from '@/components/EmptyState';
@@ -397,13 +396,13 @@ function SecureHandoverContent() {
 
 export default function SecureHandover() {
   return (
-    <RoleGuard allow={['Officer', 'Admin']}>
+    <>
       <PageHeader
         title="Secure handover"
         description="Check the reference code, the document and the one-time code before releasing the document."
         breadcrumbs={[{ label: 'Handover', to: '/handover' }, { label: 'Secure handover' }]}
       />
       <SecureHandoverContent />
-    </RoleGuard>
+    </>
   );
 }

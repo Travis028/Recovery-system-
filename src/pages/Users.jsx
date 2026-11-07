@@ -3,7 +3,6 @@ import { Lock, ShieldCheck, Users as UsersIcon } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import useResource from '@/hooks/useResource';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
@@ -241,9 +240,9 @@ function UsersContent() {
 
 export default function Users() {
   return (
-    <RoleGuard allow={['Admin']}>
+    <>
       <PageHeader title="Users and roles" description="Approve officers, assign each one to a station, and unlock or disable accounts. Every change is logged." />
       <UsersContent />
-    </RoleGuard>
+    </>
   );
 }

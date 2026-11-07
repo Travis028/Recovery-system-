@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import StatusBadge from '@/components/StatusBadge';
@@ -192,9 +191,9 @@ function SearchContent() {
 export default function SearchDocuments() {
   const { user } = useLdrsUser();
   return (
-    <RoleGuard allow={['Owner']}>
+    <>
       <PageHeader title="Search found documents" description="Check whether your ID or certificate has been handed in at a pickup point." />
       {user ? <SearchContent /> : null}
-    </RoleGuard>
+    </>
   );
 }

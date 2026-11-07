@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import Loader from '@/components/Loader';
@@ -258,12 +257,12 @@ function MatchReviewContent() {
 
 export default function MatchReview() {
   return (
-    <RoleGuard allow={['Officer', 'Admin']}>
+    <>
       <PageHeader
         title="Match review"
         description="Check ownership claims and possible matches. Matches on the exact number are confirmed automatically."
       />
       <MatchReviewContent />
-    </RoleGuard>
+    </>
   );
 }

@@ -4,7 +4,6 @@ import { AlertTriangle, ChevronRight, FilePlus, FolderOpen } from 'lucide-react'
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import useResource from '@/hooks/useResource';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
@@ -186,7 +185,7 @@ function DocumentsContent() {
 export default function Documents() {
   const { role } = useLdrsUser();
   return (
-    <RoleGuard allow={['Finder', 'Officer', 'Admin']}>
+    <>
       <PageHeader
         title="Documents"
         description="Documents handed in at pickup points and their current status."
@@ -202,6 +201,6 @@ export default function Documents() {
         }
       />
       <DocumentsContent />
-    </RoleGuard>
+    </>
   );
 }

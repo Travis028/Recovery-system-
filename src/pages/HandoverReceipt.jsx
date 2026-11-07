@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
-import RoleGuard from '@/components/RoleGuard';
 import Loader from '@/components/Loader';
 import EmptyState from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
@@ -185,9 +184,9 @@ function HandoverReceiptContent() {
 
 export default function HandoverReceipt() {
   return (
-    <RoleGuard allow={['Officer', 'Admin']}>
+    <>
       <PageHeader title="Handover receipt" breadcrumbs={[{ label: 'Handover', to: '/handover' }, { label: 'Receipt' }]} />
       <HandoverReceiptContent />
-    </RoleGuard>
+    </>
   );
 }

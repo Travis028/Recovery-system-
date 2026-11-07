@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router-dom';
 import { Archive, KeyRound, RotateCcw } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import Loader from '@/components/Loader';
 import EmptyState from '@/components/EmptyState';
@@ -192,13 +191,13 @@ function DocumentDetailContent() {
 
 export default function DocumentDetail() {
   return (
-    <RoleGuard allow={['Finder', 'Officer', 'Admin']}>
+    <>
       <PageHeader
         title="Document record"
         description="Full details are shown only here, never in lists."
         breadcrumbs={[{ label: 'Documents', to: '/documents' }, { label: 'Record' }]}
       />
       <DocumentDetailContent />
-    </RoleGuard>
+    </>
   );
 }

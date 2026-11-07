@@ -21,6 +21,14 @@ import Users from '@/pages/Users';
 import SystemSettings from '@/pages/SystemSettings';
 import MyData from '@/pages/MyData';
 import NotFound from '@/pages/NotFound';
+import RoleGuard from '@/components/RoleGuard';
+import { SCREENS } from '@/lib/nav';
+
+// Every signed-in route checks the roles listed for its screen in lib/nav.js, the same list
+// the menu is built from. The data layer checks again on every request.
+function guarded(path, screen, element) {
+  return <Route key={path} path={path} element={<RoleGuard allow={SCREENS[screen].roles}>{element}</RoleGuard>} />;
+}
 
 export default function App() {
   return (
@@ -30,23 +38,23 @@ export default function App() {
         <Route path="/verify-receipt/:handoverId" element={<VerifyReceipt />} />
         <Route element={<AppLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/report-found" element={<ReportFound />} />
-          <Route path="/documents" element={<Documents />} />
-          <Route path="/documents/:documentId" element={<DocumentDetail />} />
-          <Route path="/report-lost" element={<ReportLost />} />
-          <Route path="/search" element={<SearchDocuments />} />
-          <Route path="/alerts" element={<OwnerAlerts />} />
-          <Route path="/matches" element={<MatchReview />} />
-          <Route path="/handover" element={<HandoverList />} />
-          <Route path="/handover/:matchId" element={<SecureHandover />} />
-          <Route path="/receipt/:handoverId" element={<HandoverReceipt />} />
-          <Route path="/pickup-points" element={<PickupPoints />} />
-          <Route path="/statistics" element={<Statistics />} />
-          <Route path="/audit" element={<AuditTrail />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/system" element={<SystemSettings />} />
-          <Route path="/my-data" element={<MyData />} />
+          {guarded('/dashboard', 'dashboard', <Dashboard />)}
+          {guarded('/report-found', 'reportFound', <ReportFound />)}
+          {guarded('/documents', 'documents', <Documents />)}
+          {guarded('/documents/:documentId', 'documents', <DocumentDetail />)}
+          {guarded('/report-lost', 'reportLost', <ReportLost />)}
+          {guarded('/search', 'search', <SearchDocuments />)}
+          {guarded('/alerts', 'alerts', <OwnerAlerts />)}
+          {guarded('/matches', 'matches', <MatchReview />)}
+          {guarded('/handover', 'handover', <HandoverList />)}
+          {guarded('/handover/:matchId', 'handover', <SecureHandover />)}
+          {guarded('/receipt/:handoverId', 'receipt', <HandoverReceipt />)}
+          {guarded('/pickup-points', 'pickupPoints', <PickupPoints />)}
+          {guarded('/statistics', 'statistics', <Statistics />)}
+          {guarded('/audit', 'audit', <AuditTrail />)}
+          {guarded('/users', 'users', <Users />)}
+          {guarded('/system', 'system', <SystemSettings />)}
+          {guarded('/my-data', 'myData', <MyData />)}
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

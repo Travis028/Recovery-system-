@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import Loader from '@/components/Loader';
 import ErrorState from '@/components/ErrorState';
@@ -248,9 +247,9 @@ function StatisticsContent() {
 export default function Statistics() {
   const { user } = useLdrsUser();
   return (
-    <RoleGuard allow={['Officer', 'Admin']}>
+    <>
       <PageHeader title="Statistics" description="Totals and trends. Exports are anonymised, administrator-only and logged." />
       {user ? <StatisticsContent /> : null}
-    </RoleGuard>
+    </>
   );
 }

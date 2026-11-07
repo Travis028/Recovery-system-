@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import PhoneVerification from '@/components/security/PhoneVerification';
 import { Button } from '@/components/ui/button';
@@ -180,9 +179,9 @@ function MyDataContent() {
 export default function MyData() {
   const { user } = useLdrsUser();
   return (
-    <RoleGuard allow={['Owner', 'Finder']}>
+    <>
       <PageHeader title="My data and privacy" description="See, download, correct or remove what LDRS holds about you." />
       {user ? <MyDataContent /> : null}
-    </RoleGuard>
+    </>
   );
 }

@@ -3,7 +3,6 @@ import { BellRing, Building2, FileWarning, ShieldCheck } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import useResource from '@/hooks/useResource';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
@@ -151,9 +150,9 @@ function AlertsContent() {
 
 export default function OwnerAlerts() {
   return (
-    <RoleGuard allow={['Owner']}>
+    <>
       <PageHeader title="Alerts" description="Alerts about your documents, where to collect them, and the status of each report." />
       <AlertsContent />
-    </RoleGuard>
+    </>
   );
 }

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Download, Link2, Loader2, ScrollText, ShieldCheck } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import useResource from '@/hooks/useResource';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
@@ -142,7 +141,7 @@ export default function AuditTrail() {
   };
 
   return (
-    <RoleGuard allow={['Admin']}>
+    <>
       <PageHeader
         title="Audit trail"
         description="Every important action, who did it and when. Entries can only be added, and each carries the fingerprint of the one before it."
@@ -158,6 +157,6 @@ export default function AuditTrail() {
         Changing or deleting any entry breaks the chain and shows up when it is verified.
       </p>
       <AuditContent chain={chain} />
-    </RoleGuard>
+    </>
   );
 }

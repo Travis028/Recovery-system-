@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import PhotoUpload from '@/components/documents/PhotoUpload';
 import { Button } from '@/components/ui/button';
@@ -331,9 +330,9 @@ function ReportFoundContent() {
 
 export default function ReportFound() {
   return (
-    <RoleGuard allow={['Finder', 'Officer', 'Admin']}>
+    <>
       <PageHeader title="Register a found document" description="Photograph the ID or certificate, record where it was found and which pickup point holds it." />
       <ReportFoundContent />
-    </RoleGuard>
+    </>
   );
 }

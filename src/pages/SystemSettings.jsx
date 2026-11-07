@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
-import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import Loader from '@/components/Loader';
 import { Button } from '@/components/ui/button';
@@ -306,9 +305,9 @@ function SystemContent() {
 
 export default function SystemSettings() {
   return (
-    <RoleGuard allow={['Admin']}>
+    <>
       <PageHeader title="Backups and data protection" description="Daily backups, security limits, retention periods and owner requests." />
       <SystemContent />
-    </RoleGuard>
+    </>
   );
 }
