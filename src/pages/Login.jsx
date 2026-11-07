@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import ThemeToggle from '@/theme/ThemeToggle';
 import { KeyRound, Loader2, LockKeyhole, ShieldCheck, UserPlus } from 'lucide-react';
 
 function Field({ id, label, children, hint }) {
@@ -158,7 +159,8 @@ export default function Login() {
           </ul>
         </div>
 
-        <div className="rounded-3xl bg-white p-6 shadow-xl sm:p-8">
+        <div className="relative rounded-3xl bg-card p-6 shadow-xl sm:p-8">
+          <ThemeToggle className="absolute right-4 top-4" />
           {mode === 'login' ? (
             <form onSubmit={submitLogin} className="space-y-4">
               <div>
