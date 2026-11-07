@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ThemeToggle from '@/theme/ThemeToggle';
 import { cn } from '@/lib/utils';
 import useFieldErrors from '@/hooks/useFieldErrors';
-import { checkEmail, checkFullName, checkKenyanPhone, checkPassword, checkRequired, collectErrors } from '@/lib/validation';
+import { checkCode, checkEmail, checkFullName, checkKenyanPhone, checkPassword, checkRequired, collectErrors } from '@/lib/validation';
 
 const ROLE_OPTIONS = [
   ['Owner', 'I lost a document'],
@@ -78,6 +78,15 @@ export default function Login() {
   });
   const registerFields = useFieldErrors(registerErrors);
 
+  const loginFields = useFieldErrors(
+    collectErrors({ email: () => checkEmail(email), password: () => checkRequired(password, 'Enter your password.') }),
+  );
+  const codeFields = useFieldErrors(collectErrors({ code: () => checkCode(code) }));
+  const forgotFields = useFieldErrors(collectErrors({ forgot_email: () => checkEmail(email) }));
+  const resetFields = useFieldErrors(
+    collectErrors({ reset_code: () => checkCode(code), reset_password: () => checkPassword(password) }),
+  );
+
   useEffect(function () {
     base44.auth
       .me()
@@ -98,6 +107,9 @@ export default function Login() {
     setError('');
     setInfo('');
     setCode('');
+    [loginFields, codeFields, registerFields, forgotFields, resetFields].forEach(function (fields) {
+      fields.reset();
+    });
   };
 
   const finish = async function () {
@@ -119,6 +131,7 @@ export default function Login() {
 
   const submitLogin = function (event) {
     event.preventDefault();
+    if (!loginFields.submit()) return;
     run(async function () {
       const result = await base44.auth.login({ email, password });
       setPassword('');
@@ -134,6 +147,7 @@ export default function Login() {
 
   const submitTwoStep = function (event) {
     event.preventDefault();
+    if (!codeFields.submit()) return;
     run(async function () {
       await base44.auth.verifyTwoStep({ challenge_id: challenge.challenge_id, code });
       await finish();
@@ -157,6 +171,7 @@ export default function Login() {
 
   const submitForgot = function (event) {
     event.preventDefault();
+    if (!forgotFields.submit()) return;
     run(async function () {
       const result = await base44.auth.requestPasswordReset({ email });
       setChallenge(result);
@@ -167,6 +182,7 @@ export default function Login() {
 
   const submitReset = function (event) {
     event.preventDefault();
+    if (!resetFields.submit()) return;
     run(async function () {
       await base44.auth.resetPassword({ challenge_id: challenge.challenge_id, code, password });
       setPassword('');
@@ -220,14 +236,14 @@ export default function Login() {
           {mode === 'login' ? (
             <form onSubmit={submitLogin} className="space-y-5" noValidate>
               <FormTitle title="Sign in" description="Officers and administrators also confirm a code sent to their phone." />
-              <FormField id="email" label="Email">
-                <Input type="email" autoComplete="username" value={email} onChange={function (e) { setEmail(e.target.value); }} />
+              <FormField id="email" label="Email" error={loginFields.show('email')}>
+                <Input type="email" autoComplete="username" value={email} onBlur={loginFields.touch('email')} onChange={function (e) { setEmail(e.target.value); }} />
               </FormField>
-              <FormField id="password" label="Password">
-                <Input type="password" autoComplete="current-password" value={password} onChange={function (e) { setPassword(e.target.value); }} />
+              <FormField id="password" label="Password" error={loginFields.show('password')}>
+                <Input type="password" autoComplete="current-password" value={password} onBlur={loginFields.touch('password')} onChange={function (e) { setPassword(e.target.value); }} />
               </FormField>
               {notices}
-              <SubmitButton busy={busy} disabled={!email || !password}>
+              <SubmitButton busy={busy}>
                 Sign in
               </SubmitButton>
               <div className="flex flex-wrap justify-between gap-2">
@@ -248,11 +264,11 @@ export default function Login() {
           {mode === 'two_step' ? (
             <form onSubmit={submitTwoStep} className="space-y-5" noValidate>
               <FormTitle icon={KeyRound} title="Two-step sign-in" description="The code expires in 5 minutes. Three wrong codes block it." />
-              <FormField id="code" label="Six-digit code">
-                <Input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={function (e) { setCode(e.target.value.replace(/\D/g, '')); }} />
+              <FormField id="code" label="Six-digit code" error={codeFields.show('code')}>
+                <Input onBlur={codeFields.touch('code')} inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={function (e) { setCode(e.target.value.replace(/\D/g, '')); }} />
               </FormField>
               {notices}
-              <SubmitButton busy={busy} disabled={code.length !== 6}>
+              <SubmitButton busy={busy}>
                 Confirm and sign in
               </SubmitButton>
               <LinkButton onClick={function () { go('login'); }}>Back to sign in</LinkButton>
@@ -371,11 +387,11 @@ export default function Login() {
           {mode === 'forgot' ? (
             <form onSubmit={submitForgot} className="space-y-5" noValidate>
               <FormTitle title="Reset your password" description="We send a reset code to the phone number on your account." />
-              <FormField id="forgot_email" label="Email">
-                <Input type="email" autoComplete="username" value={email} onChange={function (e) { setEmail(e.target.value); }} />
+              <FormField id="forgot_email" label="Email" error={forgotFields.show('forgot_email')}>
+                <Input type="email" autoComplete="username" value={email} onBlur={forgotFields.touch('forgot_email')} onChange={function (e) { setEmail(e.target.value); }} />
               </FormField>
               {notices}
-              <SubmitButton busy={busy} disabled={!email}>
+              <SubmitButton busy={busy}>
                 Send reset code
               </SubmitButton>
               <LinkButton onClick={function () { go('login'); }}>Back to sign in</LinkButton>
@@ -385,14 +401,14 @@ export default function Login() {
           {mode === 'reset' ? (
             <form onSubmit={submitReset} className="space-y-5" noValidate>
               <FormTitle title="Choose a new password" />
-              <FormField id="reset_code" label="Reset code">
-                <Input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={function (e) { setCode(e.target.value.replace(/\D/g, '')); }} />
+              <FormField id="reset_code" label="Reset code" error={resetFields.show('reset_code')}>
+                <Input onBlur={resetFields.touch('reset_code')} inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={function (e) { setCode(e.target.value.replace(/\D/g, '')); }} />
               </FormField>
-              <FormField id="reset_password" label="New password" hint={PASSWORD_HINT}>
-                <Input type="password" autoComplete="new-password" value={password} onChange={function (e) { setPassword(e.target.value); }} />
+              <FormField id="reset_password" label="New password" hint={PASSWORD_HINT} error={resetFields.show('reset_password')}>
+                <Input type="password" autoComplete="new-password" value={password} onBlur={resetFields.touch('reset_password')} onChange={function (e) { setPassword(e.target.value); }} />
               </FormField>
               {notices}
-              <SubmitButton busy={busy} disabled={code.length !== 6 || !password}>
+              <SubmitButton busy={busy}>
                 Change password
               </SubmitButton>
               <LinkButton onClick={function () { go('login'); }}>Back to sign in</LinkButton>
