@@ -5,50 +5,66 @@
 @tailwind utilities;
 
 @layer base {
-    * {
-        @apply border-border outline-ring/50;
-    }
+  * {
+    @apply border-border;
+  }
 
-    html {
-        -webkit-text-size-adjust: 100%;
-    }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
 
-    body {
-        @apply bg-background text-foreground font-body;
-        -webkit-font-smoothing: antialiased;
-        text-rendering: optimizeLegibility;
-    }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    text-rendering: optimizeLegibility;
+  }
 
-    h1 {
-        @apply text-2xl font-semibold tracking-tight;
-    }
+  h1 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
 
-    h2 {
-        @apply text-lg font-semibold;
-    }
+  h2 {
+    @apply text-lg font-semibold;
+  }
 
-    h3 {
-        @apply text-base font-semibold;
-    }
+  h3 {
+    @apply text-base font-semibold;
+  }
+
+  /*
+   * A visible focus ring for anything a keyboard can reach. Components that draw their
+   * own ring (ring-2 ring-ring) remove the outline with focus-visible:outline-none.
+   */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  a:not([class]) {
+    @apply font-medium text-primary underline underline-offset-2;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.25);
+  }
 }
 
 @media print {
-    @page {
-        margin: 14mm;
-    }
+  @page {
+    margin: 14mm;
+  }
 
-    .print\:hidden {
-        display: none !important;
-    }
+  .print\:hidden {
+    display: none !important;
+  }
 
-    body {
-        background: #ffffff;
-        color: #000000;
-    }
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
 
-    .print-plain {
-        border: 0 !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-    }
+  .print-plain {
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
 }
