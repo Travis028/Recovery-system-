@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import Loader from '@/components/Loader';
 import useIdleLogout from '@/hooks/useIdleLogout';
 import { cn } from '@/lib/utils';
-import ThemeToggle from '@/theme/ThemeToggle';
+import TopBar from '@/components/layout/TopBar';
+import { Badge } from '@/components/ui/badge';
 
 function NavItems({ items, onNavigate }) {
   return (
@@ -75,31 +76,17 @@ export default function AppLayout() {
       />
 
       <div className="lg:pl-sidebar print:pl-0">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:px-8 print:hidden">
-          <div className="lg:hidden"><Brand /></div>
-          <div className="hidden lg:block">
-            <p className="text-sm font-medium text-slate-500">Lost Documents Recovery System</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <span className="hidden rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 sm:inline-flex">
-              {roleLabel}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              aria-label="Open menu"
-              onClick={function () {
-                setMenuOpen(true);
-              }}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
-        </header>
+        <TopBar
+          onOpenMenu={function () {
+            setMenuOpen(true);
+          }}
+        >
+          <span className="ml-1 hidden sm:inline-flex">
+            <Badge tone="primary">{roleLabel}</Badge>
+          </span>
+        </TopBar>
 
-        <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 lg:px-8 lg:pb-12 print:max-w-none print:pb-0 print:pt-0">
+        <main className="mx-auto w-full max-w-content px-page-x pb-28 pt-page-y lg:pb-12 print:max-w-none print:p-0">
           {role === 'Officer' && !user.approved ? (
             <p className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 print:hidden">
               Your officer account is waiting for approval by an administrator. You can look around, but you cannot register,
