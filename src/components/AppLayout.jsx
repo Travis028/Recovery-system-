@@ -37,6 +37,12 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
+      <a
+        href="#main-content"
+        className="sr-only z-50 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-3"
+      >
+        Skip to main content
+      </a>
       <Sidebar sections={sections} />
       <MobileNav open={menuOpen} onOpenChange={setMenuOpen} sections={sections} />
 
@@ -49,7 +55,7 @@ export default function AppLayout() {
           <UserMenu user={user} role={role} onSignOut={handleLogout} />
         </TopBar>
 
-        <main className="mx-auto w-full max-w-content px-page-x pb-24 pt-page-y lg:pb-12 print:max-w-none print:p-0">
+        <main id="main-content" tabIndex={-1} className="mx-auto outline-none w-full max-w-content px-page-x pb-24 pt-page-y lg:pb-12 print:max-w-none print:p-0">
           {role === 'Officer' && !user.approved ? (
             <p className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 print:hidden">
               Your officer account is waiting for approval by an administrator. You can look around, but you cannot register,
