@@ -18,6 +18,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { documentTypeLabel, formatDate, formatDateTime, idLabelFor, normalizeId } from '@/lib/ldrs';
 import { cn } from '@/lib/utils';
+import useFieldErrors from '@/hooks/useFieldErrors';
+import { checkCode, checkMaxLength, checkRequired, collectErrors } from '@/lib/validation';
 
 const OTP_MINUTES = 5;
 const MAX_OTP_ATTEMPTS = 3;
@@ -80,6 +82,26 @@ function SecureHandoverContent() {
   const [claimantIdNumber, setClaimantIdNumber] = useState('');
   const [physicalChecked, setPhysicalChecked] = useState(false);
   const [notes, setNotes] = useState('');
+
+  const referenceOk = Boolean(match) && referenceInput.trim().toUpperCase() === String(match.reference_code || '').toUpperCase();
+  const numberOk = Boolean(document) && normalizeId(numberInput) !== '' && normalizeId(numberInput) === normalizeId(document.document_number);
+  const otpAttempts = otp ? Number(otp.attempts || 0) : 0;
+  const otpExpired = Boolean(otp) && new Date(otp.expires_at).getTime() <= now;
+  const otpLocked = Boolean(otp) && (otp.used || otp.locked || otpAttempts >= MAX_OTP_ATTEMPTS);
+  const otpActive = Boolean(otp) && !otpLocked && !otpExpired;
+  const otpReady = otpActive && /^\d{6}$/.test(otpInput.trim());
+
+  const fields = useFieldErrors(
+    collectErrors({
+      reference: () => checkRequired(referenceInput, 'Enter the reference code the owner received.') || (referenceOk ? '' : 'This reference code does not match the record.'),
+      number: () => checkRequired(numberInput, 'Enter the number on the document the claimant describes.') || (numberOk ? '' : 'This number does not match the document on record.'),
+      otp: () => (!otp ? 'Create a collection code for the owner first.' : otpActive ? checkCode(otpInput) : 'This code can no longer be used. Create a new one.'),
+      claimant: () => (claimant.trim().length >= 3 ? '' : 'Enter the full name of the person collecting.'),
+      claimant_id_number: () => (claimantIdNumber.trim().length >= 4 ? '' : 'Enter the number on the ID they showed.'),
+      notes: () => checkMaxLength(notes, 500, 'The note'),
+      physical_check: () => (physicalChecked ? '' : 'Confirm that you compared the ID with the record.'),
+    }),
+  );
 
   const loadOtp = async function () {
     const otpList = await base44.entities.OtpCode.filter({ match_id: matchId }, { sort: '-created_date', limit: 1 });
@@ -167,17 +189,9 @@ function SecureHandoverContent() {
     );
   }
 
-  const referenceOk = referenceInput.trim().toUpperCase() === String(match.reference_code || '').toUpperCase();
-  const numberOk = normalizeId(numberInput) !== '' && normalizeId(numberInput) === normalizeId(document.document_number);
-  const otpAttempts = otp ? Number(otp.attempts || 0) : 0;
-  const otpExpired = Boolean(otp) && new Date(otp.expires_at).getTime() <= now;
-  const otpLocked = Boolean(otp) && (otp.used || otp.locked || otpAttempts >= MAX_OTP_ATTEMPTS);
-  const otpActive = Boolean(otp) && !otpLocked && !otpExpired;
-  const otpReady = otpActive && /^\d{6}$/.test(otpInput.trim());
   const secondsLeft = otpActive ? Math.max(0, Math.round((new Date(otp.expires_at).getTime() - now) / 1000)) : 0;
-  const canApprove = referenceOk && numberOk && otpReady && physicalChecked && claimant.trim().length > 2 && claimantIdNumber.trim().length > 3;
-
   const approve = async function () {
+    if (!fields.submit()) return;
     setSubmitting(true);
     setError('');
     try {
@@ -266,15 +280,16 @@ function SecureHandoverContent() {
 
       <Step number={2} title="Check the claimant" description="Compare the reference code, the document they describe, and the code on the owner's phone.">
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField id="reference" label="Reference code">
-            <Input value={referenceInput} placeholder="LDRS-XXXXXX" autoComplete="off" onChange={function (event) { setReferenceInput(event.target.value); }} />
+          <FormField error={fields.show('reference')} id="reference" label="Reference code">
+            <Input value={referenceInput} onBlur={fields.touch('reference')} placeholder="LDRS-XXXXXX" autoComplete="off" onChange={function (event) { setReferenceInput(event.target.value); }} />
           </FormField>
-          <FormField id="number" label={idLabelFor(document.document_type) + ' presented'}>
-            <Input value={numberInput} autoComplete="off" onChange={function (event) { setNumberInput(event.target.value); }} />
+          <FormField error={fields.show('number')} id="number" label={idLabelFor(document.document_type) + ' presented'}>
+            <Input value={numberInput} onBlur={fields.touch('number')} autoComplete="off" onChange={function (event) { setNumberInput(event.target.value); }} />
           </FormField>
-          <FormField id="otp" label="Six-digit code from the owner">
+          <FormField error={fields.show('otp')} id="otp" label="Six-digit code from the owner">
             <Input
               value={otpInput}
+              onBlur={fields.touch('otp')}
               inputMode="numeric"
               autoComplete="off"
               maxLength={6}
@@ -289,8 +304,8 @@ function SecureHandoverContent() {
 
       <Step number={3} title="Record who is collecting" description="This goes on the receipt and in the audit trail.">
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField id="claimant" label="Full name of the person collecting" className="sm:col-span-2">
-            <Input value={claimant} autoComplete="off" onChange={function (event) { setClaimant(event.target.value); }} />
+          <FormField error={fields.show('claimant')} id="claimant" label="Full name of the person collecting" className="sm:col-span-2">
+            <Input value={claimant} onBlur={fields.touch('claimant')} autoComplete="off" onChange={function (event) { setClaimant(event.target.value); }} />
           </FormField>
           <FormField id="claimant_id_type" label="ID they showed">
             <Select value={claimantIdType} onValueChange={setClaimantIdType}>
@@ -308,20 +323,32 @@ function SecureHandoverContent() {
               </SelectContent>
             </Select>
           </FormField>
-          <FormField id="claimant_id_number" label="Number on that ID">
-            <Input value={claimantIdNumber} autoComplete="off" onChange={function (event) { setClaimantIdNumber(event.target.value); }} />
+          <FormField error={fields.show('claimant_id_number')} id="claimant_id_number" label="Number on that ID">
+            <Input value={claimantIdNumber} onBlur={fields.touch('claimant_id_number')} autoComplete="off" onChange={function (event) { setClaimantIdNumber(event.target.value); }} />
           </FormField>
-          <FormField id="notes" label="Handover note" optional className="sm:col-span-2">
-            <Textarea value={notes} rows={2} onChange={function (event) { setNotes(event.target.value); }} />
+          <FormField error={fields.show('notes')} id="notes" label="Handover note" optional className="sm:col-span-2">
+            <Textarea value={notes} onBlur={fields.touch('notes')} rows={2} onChange={function (event) { setNotes(event.target.value); }} />
           </FormField>
         </div>
         <label htmlFor="physical_check" className="mt-4 flex items-start gap-3 rounded-md border border-border bg-muted p-4">
-          <Checkbox id="physical_check" checked={physicalChecked} onCheckedChange={function (value) { setPhysicalChecked(Boolean(value)); }} className="mt-0.5" />
+          <Checkbox
+            id="physical_check"
+            checked={physicalChecked}
+            aria-invalid={fields.show('physical_check') ? true : undefined}
+            aria-describedby={fields.show('physical_check') ? 'physical_check-error' : undefined}
+            onCheckedChange={function (value) { setPhysicalChecked(Boolean(value)); }}
+            className="mt-0.5"
+          />
           <span className="text-sm text-foreground">
             I have compared the claimant's ID with the record and the photograph, and the person in front of me is the person named on
             it, or is authorised to collect for them.
           </span>
         </label>
+        {fields.show('physical_check') ? (
+          <p id="physical_check-error" className="mt-1.5 text-xs font-medium text-danger-subtle-foreground">
+            {fields.show('physical_check')}
+          </p>
+        ) : null}
       </Step>
 
       <Step number={4} title="Release the document">
@@ -351,7 +378,7 @@ function SecureHandoverContent() {
         ) : null}
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          <Button variant="success" disabled={!canApprove || submitting} onClick={approve}>
+          <Button variant="success" disabled={submitting} onClick={approve}>
             {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />}
             Approve release
           </Button>
@@ -361,7 +388,7 @@ function SecureHandoverContent() {
               Back to handover
             </Link>
           </Button>
-          {!canApprove ? <p className="text-sm text-muted-foreground">Release unlocks when every check passes and the collector's details are filled in.</p> : null}
+          {!fields.valid ? <p className="text-sm text-muted-foreground">Every check must pass before the document can be released.</p> : null}
         </div>
       </Step>
     </div>
