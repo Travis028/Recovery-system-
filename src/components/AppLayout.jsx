@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Navigate, Outlet } from 'react-router-dom';
 import { LogOut, Menu, X } from 'lucide-react';
 import Brand from '@/components/layout/Brand';
+import Sidebar from '@/components/layout/Sidebar';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import { navSectionsForRole } from '@/lib/nav';
@@ -49,7 +50,8 @@ export default function AppLayout() {
   if (loading) return <Loader label="Opening LDRS" />;
   if (!user) return <Navigate to="/login" replace />;
 
-  const items = navSectionsForRole(role).flatMap(function (section) {
+  const sections = navSectionsForRole(role);
+  const items = sections.flatMap(function (section) {
     return section.items;
   });
   const quickItems = items.slice(0, 4);
@@ -61,27 +63,18 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-slate-200 bg-white px-5 py-6 lg:flex print:hidden">
-        <Brand />
-        <div className="mt-6 rounded-2xl bg-gradient-to-br from-blue-50 to-violet-50 px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">{roleLabel}</p>
-          <p className="mt-1 truncate text-sm font-medium text-slate-700">{displayName}</p>
-        </div>
-        <div className="mt-6 flex-1 overflow-y-auto">
-          <NavItems items={items} />
-        </div>
-        <Button
-          variant="outline"
-          className="mt-4 w-full justify-start gap-3 rounded-xl border-slate-200 text-slate-600"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4" />
-          Log out
-        </Button>
-      </aside>
+    <div className="min-h-screen bg-background">
+      <Sidebar
+        sections={sections}
+        footer={
+          <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground" onClick={handleLogout}>
+            <LogOut aria-hidden="true" />
+            Sign out
+          </Button>
+        }
+      />
 
-      <div className="lg:pl-72 print:pl-0">
+      <div className="lg:pl-sidebar print:pl-0">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:px-8 print:hidden">
           <div className="lg:hidden"><Brand /></div>
           <div className="hidden lg:block">
