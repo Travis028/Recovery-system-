@@ -3,6 +3,7 @@ import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { fieldClasses } from '@/components/ui/input';
+import { useFieldProps } from '@/components/ui/form-field';
 
 const Select = SelectPrimitive.Root;
 const SelectGroup = SelectPrimitive.Group;
@@ -17,7 +18,7 @@ const SelectTrigger = forwardRef(function SelectTrigger({ className, children, .
         'flex h-10 items-center justify-between gap-2 whitespace-nowrap py-2 text-left data-[placeholder]:text-muted-foreground [&>span]:line-clamp-1',
         className,
       )}
-      {...props}
+      {...useFieldProps(props)}
     >
       {children}
       <SelectPrimitive.Icon asChild>

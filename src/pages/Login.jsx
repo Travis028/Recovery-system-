@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ThemeToggle from '@/theme/ThemeToggle';
 import { cn } from '@/lib/utils';
+import useFieldErrors from '@/hooks/useFieldErrors';
+import { checkEmail, checkFullName, checkKenyanPhone, checkPassword, checkRequired, collectErrors } from '@/lib/validation';
 
 const ROLE_OPTIONS = [
   ['Owner', 'I lost a document'],
@@ -65,6 +67,16 @@ export default function Login() {
   const [points, setPoints] = useState([]);
   const [reg, setReg] = useState({ full_name: '', email: '', phone: '', password: '', ldrs_role: 'Owner', pickup_point_id: '', language: 'en' });
   const [consent, setConsent] = useState(false);
+
+  const registerErrors = collectErrors({
+    reg_name: () => checkFullName(reg.full_name),
+    reg_email: () => checkEmail(reg.email),
+    reg_phone: () => checkKenyanPhone(reg.phone, { optional: reg.ldrs_role !== 'Officer' }),
+    reg_point: () => (reg.ldrs_role === 'Officer' ? checkRequired(reg.pickup_point_id, 'Choose the station you work at.') : ''),
+    reg_password: () => checkPassword(reg.password),
+    reg_consent: () => (consent ? '' : 'Tick the box to agree before creating an account.'),
+  });
+  const registerFields = useFieldErrors(registerErrors);
 
   useEffect(function () {
     base44.auth
@@ -130,6 +142,7 @@ export default function Login() {
 
   const submitRegister = function (event) {
     event.preventDefault();
+    if (!registerFields.submit()) return;
     run(async function () {
       const result = await base44.auth.register(reg);
       setEmail(reg.email);
@@ -272,19 +285,30 @@ export default function Login() {
                   })}
                 </div>
               </fieldset>
-              <FormField id="reg_name" label="Full name">
-                <Input autoComplete="name" value={reg.full_name} onChange={function (e) { setRegField('full_name', e.target.value); }} />
+              <FormField id="reg_name" label="Full name" error={registerFields.show('reg_name')}>
+                <Input autoComplete="name" value={reg.full_name} onBlur={registerFields.touch('reg_name')} onChange={function (e) { setRegField('full_name', e.target.value); }} />
               </FormField>
               <div className="grid gap-4 sm:grid-cols-2">
-                <FormField id="reg_email" label="Email">
-                  <Input type="email" autoComplete="email" value={reg.email} onChange={function (e) { setRegField('email', e.target.value); }} />
+                <FormField id="reg_email" label="Email" error={registerFields.show('reg_email')}>
+                  <Input type="email" autoComplete="email" value={reg.email} onBlur={registerFields.touch('reg_email')} onChange={function (e) { setRegField('email', e.target.value); }} />
                 </FormField>
-                <FormField id="reg_phone" label="Phone number" optional={reg.ldrs_role !== 'Officer'}>
-                  <Input type="tel" autoComplete="tel" value={reg.phone} placeholder="0712 345 678" onChange={function (e) { setRegField('phone', e.target.value); }} />
+                <FormField
+                  id="reg_phone"
+                  label="Phone number"
+                  optional={reg.ldrs_role !== 'Officer'}
+                  hint={reg.ldrs_role === 'Officer' ? 'Needed for the two-step sign-in code.' : undefined}
+                  error={registerFields.show('reg_phone')}
+                >
+                  <Input type="tel" autoComplete="tel" value={reg.phone} placeholder="0712 345 678" onBlur={registerFields.touch('reg_phone')} onChange={function (e) { setRegField('phone', e.target.value); }} />
                 </FormField>
               </div>
               {reg.ldrs_role === 'Officer' ? (
-                <FormField id="reg_point" label="Station you work at" hint="An administrator confirms this before your account can release documents.">
+                <FormField
+                  id="reg_point"
+                  label="Station you work at"
+                  hint="An administrator confirms this before your account can release documents."
+                  error={registerFields.show('reg_point')}
+                >
                   <Select value={reg.pickup_point_id} onValueChange={function (value) { setRegField('pickup_point_id', value); }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choose your station" />
@@ -301,8 +325,8 @@ export default function Login() {
                   </Select>
                 </FormField>
               ) : null}
-              <FormField id="reg_password" label="Password" hint={PASSWORD_HINT}>
-                <Input type="password" autoComplete="new-password" value={reg.password} onChange={function (e) { setRegField('password', e.target.value); }} />
+              <FormField id="reg_password" label="Password" hint={PASSWORD_HINT} error={registerFields.show('reg_password')}>
+                <Input type="password" autoComplete="new-password" value={reg.password} onBlur={registerFields.touch('reg_password')} onChange={function (e) { setRegField('password', e.target.value); }} />
               </FormField>
               <FormField id="reg_language" label="Language for SMS and alerts">
                 <Select value={reg.language} onValueChange={function (value) { setRegField('language', value); }}>
@@ -315,15 +339,29 @@ export default function Login() {
                   </SelectContent>
                 </Select>
               </FormField>
-              <label htmlFor="reg_consent" className="flex items-start gap-3 rounded-md border border-border bg-muted/50 p-3">
-                <Checkbox id="reg_consent" checked={consent} onCheckedChange={function (v) { setConsent(Boolean(v)); }} className="mt-0.5" />
-                <span className="text-xs leading-relaxed text-muted-foreground">
-                  I agree that LDRS stores my name, email and phone number to run my account, as allowed by the Data Protection Act, 2019. I
-                  can ask for a copy, correction or removal at any time.
-                </span>
-              </label>
+              <div className="space-y-1.5">
+                <label htmlFor="reg_consent" className="flex items-start gap-3 rounded-md border border-border bg-muted/50 p-3">
+                  <Checkbox
+                    id="reg_consent"
+                    checked={consent}
+                    aria-invalid={registerFields.show('reg_consent') ? true : undefined}
+                    aria-describedby={registerFields.show('reg_consent') ? 'reg_consent-error' : undefined}
+                    onCheckedChange={function (v) { setConsent(Boolean(v)); }}
+                    className="mt-0.5"
+                  />
+                  <span className="text-xs leading-relaxed text-muted-foreground">
+                    I agree that LDRS stores my name, email and phone number to run my account, as allowed by the Data Protection Act, 2019. I
+                    can ask for a copy, correction or removal at any time.
+                  </span>
+                </label>
+                {registerFields.show('reg_consent') ? (
+                  <p id="reg_consent-error" className="text-xs font-medium text-danger-subtle-foreground">
+                    {registerFields.show('reg_consent')}
+                  </p>
+                ) : null}
+              </div>
               {notices}
-              <SubmitButton busy={busy} disabled={!consent}>
+              <SubmitButton busy={busy}>
                 Create account
               </SubmitButton>
               <LinkButton onClick={function () { go('login'); }}>I already have an account</LinkButton>
