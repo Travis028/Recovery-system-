@@ -1,26 +1,33 @@
 import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import useFieldErrors from '@/hooks/useFieldErrors';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import FormField from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { SearchInput } from '@/components/ui/search-input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CaptchaPrompt from '@/components/security/CaptchaPrompt';
-import { DOCUMENT_TYPES, documentTypeLabel, formatDate, isValidKenyanPhone } from '@/lib/ldrs';
+import { useToast } from '@/components/ui/use-toast';
+import { DOCUMENT_TYPES, documentTypeLabel, formatDate } from '@/lib/ldrs';
 import { logAction, AUDIT_ACTIONS } from '@/lib/audit';
-import { Loader2, Search } from 'lucide-react';
+import { checkKenyanPhone, checkMaxLength, checkPersonName, collectErrors } from '@/lib/validation';
+import { cn } from '@/lib/utils';
 
 /**
  * Lets an owner claim a document that has been handed in. The list comes from the same
- * masked, rate-limited search as the Search screen — the owner never receives the full
- * name or number of a document before an officer verifies the claim.
+ * masked, rate-limited search as the Search screen, so the owner never receives the full
+ * name or number of a document before an officer checks the claim.
  */
 export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaimed, initialDocument }) {
+  const { toast } = useToast();
   const [documents, setDocuments] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [type, setType] = useState('');
+  const [type, setType] = useState('any');
   const [query, setQuery] = useState('');
   const [captcha, setCaptcha] = useState(null);
   const [selectedId, setSelectedId] = useState('');
@@ -31,12 +38,25 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  const selected = documents.find(function (doc) {
+    return doc.id === selectedId;
+  });
+  const fields = useFieldErrors(
+    collectErrors({
+      claim_document: () => (selected ? '' : 'Search for the document and choose it from the list.'),
+      claim_name: () => checkPersonName(ownerName),
+      claim_phone: () => checkKenyanPhone(phone),
+      claim_note: () => checkMaxLength(note, 500, 'The note'),
+    }),
+  );
+  const { reset: resetFields } = fields;
+
   useEffect(
     function () {
       if (!open) return;
       setError('');
       setQuery('');
-      setType('');
+      setType('any');
       setCaptcha(null);
       setSearched(Boolean(initialDocument));
       setDocuments(initialDocument ? [initialDocument] : []);
@@ -45,8 +65,9 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
       setPhone(user.phone || '');
       setDocumentNumber('');
       setNote('');
+      resetFields();
     },
-    [open, user.full_name, user.phone, initialDocument],
+    [open, user.full_name, user.phone, initialDocument, resetFields],
   );
 
   const runSearch = async function (captchaAnswer) {
@@ -56,7 +77,7 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
     try {
       const looksLikeNumber = /\d/.test(term);
       const result = await base44.functions.invoke('searchFoundDocuments', {
-        document_type: type,
+        document_type: type === 'any' ? '' : type,
         name: looksLikeNumber ? '' : term,
         number: looksLikeNumber ? term : '',
         captcha_id: captchaAnswer ? captchaAnswer.id : undefined,
@@ -67,7 +88,7 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
       setCaptcha(null);
     } catch (searchError) {
       if (searchError.code === 'captcha_required') {
-        setCaptcha(await base44.functions.invoke('getCaptcha'));
+        setCaptcha(await base44.functions.invoke('getCaptcha').catch(() => null));
       }
       setError(searchError.message || 'The search could not be completed.');
     } finally {
@@ -75,59 +96,37 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
     }
   };
 
-  const selected = documents.find(function (doc) {
-    return doc.id === selectedId;
-  });
-
   const submit = async function (event) {
     event.preventDefault();
-    if (!selected) {
-      setError('Choose the document you are claiming first.');
-      return;
-    }
-    if (String(ownerName).trim().length < 2) {
-      setError('Enter the full name shown on the document.');
-      return;
-    }
-    if (!isValidKenyanPhone(phone)) {
-      setError('Enter a valid Kenyan phone number, for example 0712345678.');
-      return;
-    }
-
+    if (!fields.submit()) return;
     setSubmitting(true);
     setError('');
     try {
-      const existing = await base44.entities.Claim.filter(
-        { document_id: selected.id, owner_user_id: user.id, status: { $in: ['Pending', 'Approved'] } },
-        { limit: 1 },
-      );
-      if ((existing.items || []).length) {
+      const existing = await base44.entities.Claim.filter({ document_id: selected.id, owner_user_id: user.id, status: { $in: ['Pending', 'Approved'] } }, { limit: 1 });
+      if (existing.length) {
         setError('You have already claimed this document. Watch your alerts for the officer decision.');
         return;
       }
-
       await base44.entities.Claim.create({
         document_id: selected.id,
         document_type: selected.document_type,
         owner_user_id: user.id,
-        owner_name: String(ownerName).trim(),
-        phone: String(phone).trim(),
-        document_number: String(documentNumber).trim(),
-        note: String(note).trim(),
+        owner_name: ownerName.trim(),
+        phone: phone.trim(),
+        document_number: documentNumber.trim(),
+        note: note.trim(),
         status: 'Pending',
       });
-
       await logAction({
         action: AUDIT_ACTIONS.CLAIM_SUBMITTED,
         details: 'Claim submitted for a ' + documentTypeLabel(selected.document_type) + ' (' + selected.document_number + ')',
         user,
       });
-
+      toast({ tone: 'success', title: 'Claim sent', description: 'An officer at the pickup point will check it and you will get an alert.' });
       onClaimed();
       onOpenChange(false);
     } catch (submitError) {
-      console.error('Claim could not be submitted', submitError);
-      setError(submitError.message || 'The claim could not be submitted. Please try again.');
+      setError(submitError.message || 'The claim could not be sent. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -135,27 +134,26 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="font-heading">Claim a document</DialogTitle>
-          <DialogDescription>
-            Choose a document that has been handed in and belongs to you. An officer will check your claim before the
-            document is released.
-          </DialogDescription>
+          <DialogTitle>Claim a document</DialogTitle>
+          <DialogDescription>Choose a document that has been handed in and belongs to you. An officer checks your claim before it is released.</DialogDescription>
         </DialogHeader>
 
         <form
-          className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+          role="search"
+          className="grid gap-3 sm:grid-cols-[12rem_1fr_auto]"
           onSubmit={function (event) {
             event.preventDefault();
             runSearch();
           }}
         >
           <Select value={type} onValueChange={setType}>
-            <SelectTrigger id="claim_type">
-              <SelectValue placeholder="Any document type" />
+            <SelectTrigger aria-label="Document type">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="any">Any document type</SelectItem>
               {DOCUMENT_TYPES.map(function (item) {
                 return (
                   <SelectItem key={item.value} value={item.value}>
@@ -165,150 +163,98 @@ export default function ClaimDocumentDialog({ open, onOpenChange, user, onClaime
               })}
             </SelectContent>
           </Select>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              id="claim_query"
-              value={query}
-              className="pl-9"
-              placeholder="Full name or document number"
-              onChange={function (event) {
-                setQuery(event.target.value);
-              }}
-            />
-          </div>
-          <Button type="submit" variant="outline" className="rounded-xl" disabled={searching || String(query).trim().length < 3}>
-            {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          <SearchInput id="claim_query" label="Full name or document number" value={query} placeholder="Full name or document number" onChange={function (event) { setQuery(event.target.value); }} />
+          <Button type="submit" variant="secondary" disabled={searching || String(query).trim().length < 3}>
+            {searching ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
             Search
           </Button>
         </form>
 
-        {captcha ? (
-          <CaptchaPrompt
-            captcha={captcha}
-            onAnswer={function (answer) {
-              runSearch({ id: captcha.captcha_id, answer });
-            }}
-          />
-        ) : null}
+        {captcha ? <CaptchaPrompt captcha={captcha} busy={searching} onAnswer={function (answer) { runSearch({ id: captcha.captcha_id, answer }); }} /> : null}
 
-        {searched ? (
-          documents.length ? (
-            <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
-              {documents.map(function (doc) {
-                const active = doc.id === selectedId;
-                return (
-                  <button
-                    key={doc.id}
-                    type="button"
-                    onClick={function () {
-                      setSelectedId(doc.id);
-                      setError('');
-                    }}
-                    className={
-                      active
-                        ? 'w-full rounded-xl border border-blue-900 bg-blue-50 p-3 text-left'
-                        : 'w-full rounded-xl border border-slate-200 bg-white p-3 text-left hover:border-blue-300'
-                    }
-                  >
-                    <p className="font-heading text-sm font-semibold text-slate-900">{documentTypeLabel(doc.document_type)}</p>
-                    <p className="mt-1 text-xs text-slate-600">
-                      {doc.owner_name} | {doc.document_number}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Found at {doc.found_location} on {formatDate(doc.date_found)}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
+        <div id="claim_document" tabIndex={-1} className="outline-none">
+          {searched ? (
+            documents.length ? (
+              <ul className="max-h-64 space-y-2 overflow-y-auto pr-1" aria-label="Documents found">
+                {documents.map(function (doc) {
+                  const active = doc.id === selectedId;
+                  return (
+                    <li key={doc.id}>
+                      <button
+                        type="button"
+                        aria-pressed={active}
+                        onClick={function () {
+                          setSelectedId(doc.id);
+                          setError('');
+                        }}
+                        className={cn(
+                          'w-full rounded-md border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                          active ? 'border-primary bg-primary-subtle' : 'border-border hover:bg-muted',
+                        )}
+                      >
+                        <p className="text-sm font-medium">{documentTypeLabel(doc.document_type)}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {doc.owner_name} · <span className="font-mono">{doc.document_number}</span>
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Found at {doc.found_location} on {formatDate(doc.date_found)}
+                        </p>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="rounded-md border border-dashed border-border-strong bg-muted/50 p-4 text-sm text-muted-foreground">No held document matches this search. Try another name or number.</p>
+            )
           ) : (
-            <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-              No held document matches this search. Try another name or number.
+            <p className="rounded-md border border-dashed border-border-strong bg-muted/50 p-4 text-sm text-muted-foreground">
+              Search with the full name on the document or its number. Results show partly hidden details only.
             </p>
-          )
-        ) : (
-          <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-            Search with the full name on the document or its number. Results show partly hidden details only.
-          </p>
-        )}
+          )}
+          {fields.show('claim_document') ? <p className="mt-1.5 text-xs font-medium text-danger-subtle-foreground">{fields.show('claim_document')}</p> : null}
+        </div>
 
-        <form className="space-y-3" onSubmit={submit}>
+        <form className="space-y-4" onSubmit={submit} noValidate>
           {selected ? (
-            <p className="rounded-xl bg-blue-50 p-3 text-xs text-blue-900">
-              Claiming: {documentTypeLabel(selected.document_type)} found at {selected.found_location} on{' '}
-              {formatDate(selected.date_found)}.
-            </p>
+            <Alert tone="info">
+              Claiming: {documentTypeLabel(selected.document_type)} found at {selected.found_location} on {formatDate(selected.date_found)}.
+            </Alert>
           ) : null}
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="claim_name">Full name on the document</Label>
-              <Input
-                id="claim_name"
-                value={ownerName}
-                placeholder="Example: Mary Wanjiru"
-                onChange={function (event) {
-                  setOwnerName(event.target.value);
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="claim_phone">Your phone number</Label>
-              <Input
-                id="claim_phone"
-                value={phone}
-                placeholder="Example: 0712345678"
-                onChange={function (event) {
-                  setPhone(event.target.value);
-                }}
-              />
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField id="claim_name" label="Full name on the document" error={fields.show('claim_name')}>
+              <Input value={ownerName} autoComplete="name" onBlur={fields.touch('claim_name')} onChange={function (event) { setOwnerName(event.target.value); }} />
+            </FormField>
+            <FormField id="claim_phone" label="Your phone number" error={fields.show('claim_phone')}>
+              <Input value={phone} type="tel" autoComplete="tel" placeholder="0712 345 678" onBlur={fields.touch('claim_phone')} onChange={function (event) { setPhone(event.target.value); }} />
+            </FormField>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="claim_number">Number on the document (optional)</Label>
-            <Input
-              id="claim_number"
-              value={documentNumber}
-              placeholder="The number printed on your document"
-              onChange={function (event) {
-                setDocumentNumber(event.target.value);
-              }}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="claim_note">Anything that proves it is yours (optional)</Label>
+          <FormField id="claim_number" label="Number on the document" optional hint="It helps the officer confirm the document is yours.">
+            <Input value={documentNumber} autoComplete="off" onChange={function (event) { setDocumentNumber(event.target.value); }} />
+          </FormField>
+          <FormField id="claim_note" label="Anything that proves it is yours" optional error={fields.show('claim_note')}>
             <Textarea
-              id="claim_note"
               value={note}
-              placeholder="Example: My photo is on it and I lost it at the market in Eldoret."
+              placeholder="For example: my photo is on it and I lost it at the market in Eldoret."
+              onBlur={fields.touch('claim_note')}
               onChange={function (event) {
                 setNote(event.target.value);
               }}
             />
-          </div>
+          </FormField>
 
-          {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+          {error ? <Alert tone="danger">{error}</Alert> : null}
 
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-xl"
-              disabled={submitting}
-              onClick={function () {
-                onOpenChange(false);
-              }}
-            >
+          <DialogFooter>
+            <Button type="button" variant="secondary" disabled={submitting} onClick={function () { onOpenChange(false); }}>
               Cancel
             </Button>
-            <Button type="submit" className="gap-2 rounded-xl bg-blue-900 hover:bg-blue-950" disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Submit claim
+            <Button type="submit" disabled={submitting}>
+              {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+              Send claim
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
