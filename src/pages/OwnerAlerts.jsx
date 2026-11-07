@@ -1,180 +1,150 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { BellRing, Building2, FileWarning, ShieldCheck } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import useLdrsUser from '@/hooks/useLdrsUser';
+import useResource from '@/hooks/useResource';
 import RoleGuard from '@/components/RoleGuard';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
+import ErrorState from '@/components/ErrorState';
 import Loader from '@/components/Loader';
 import StatusBadge from '@/components/StatusBadge';
-import useLdrsUser from '@/hooks/useLdrsUser';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DELIVERY_STATUS_LABELS, documentTypeLabel, formatDate, formatDateTime, maskDocumentNumber } from '@/lib/ldrs';
-import { BellRing, Building2, ShieldCheck } from 'lucide-react';
+
+async function loadAlerts(userId) {
+  const [alerts, matches, reports, points] = await Promise.all([
+    base44.entities.Notification.filter({ user_id: userId }, { sort: '-created_date', limit: 50 }),
+    base44.entities.Match.filter({ owner_user_id: userId, match_status: { $in: ['Confirmed', 'Returned'] } }, { sort: '-created_date', limit: 50 }),
+    base44.entities.LossReport.filter({ owner_user_id: userId }, { sort: '-created_date', limit: 50 }),
+    base44.entities.PickupPoint.filter({ active: true }, { sort: 'name', limit: 100 }),
+  ]);
+  const documentIds = matches.map((match) => match.document_id).filter(Boolean);
+  const documentsById = {};
+  if (documentIds.length) {
+    (await base44.entities.Document.filter({ id: { $in: documentIds } })).forEach(function (doc) {
+      documentsById[doc.id] = doc;
+    });
+  }
+  return { alerts, matches, reports, points, documentsById };
+}
 
 function AlertsContent() {
   const { user } = useLdrsUser();
-  const [loading, setLoading] = useState(true);
-  const [alerts, setAlerts] = useState([]);
-  const [matches, setMatches] = useState([]);
-  const [documentsById, setDocumentsById] = useState({});
-  const [points, setPoints] = useState([]);
-  const [reports, setReports] = useState([]);
+  const { data, loading, error, reload } = useResource(() => loadAlerts(user.id), [user.id]);
 
-  useEffect(
-    function () {
-      let active = true;
-      const load = async function () {
-        const alertPage = await base44.entities.Notification.filter(
-          { user_id: user.id },
-          { sort: '-created_date', limit: 50 },
-        );
-        const matchList = await base44.entities.Match.filter(
-          { owner_user_id: user.id, match_status: { $in: ['Confirmed', 'Returned'] } },
-          { sort: '-created_date', limit: 50 },
-        );
-        const matchItems = matchList.items || matchList || [];
-        const documentIds = matchItems
-          .map(function (match) {
-            return match.document_id;
-          })
-          .filter(Boolean);
-        const documentMap = {};
-        if (documentIds.length) {
-          const documentList = await base44.entities.Document.filter({ id: { $in: documentIds } });
-          (documentList.items || documentList || []).forEach(function (doc) {
-            documentMap[doc.id] = doc;
-          });
-        }
-        const reportPage = await base44.entities.LossReport.filter(
-          { owner_user_id: user.id },
-          { sort: '-created_date', limit: 50 },
-        );
-        const pointList = await base44.entities.PickupPoint.filter({ active: true }, { sort: 'name', limit: 100 });
+  if (loading && !data) return <Loader label="Loading your alerts" />;
+  if (error) return <ErrorState title="Your alerts could not be loaded" error={error} onRetry={reload} />;
 
-        if (!active) return;
-        setAlerts(alertPage.items || []);
-        setMatches(matchItems);
-        setDocumentsById(documentMap);
-        setReports(reportPage.items || []);
-        setPoints(pointList.items || []);
-        setLoading(false);
-      };
-      load();
-      return function () {
-        active = false;
-      };
-    },
-    [user.id],
-  );
-
-  if (loading) return <Loader label="Loading your alerts" />;
-
+  const { alerts, matches, reports, points, documentsById } = data;
   const pointName = function (id) {
-    const point = points.find(function (item) {
-      return item.id === id;
-    });
+    const point = points.find((item) => item.id === id);
     return point ? point.name + (point.location ? ', ' + point.location : '') : 'Shown in your alert message';
   };
 
   return (
-    <div className="space-y-8">
-      <section>
-        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Alerts sent to you</h2>
-        {alerts.length ? (
-          <div className="space-y-3">
-            {alerts.map(function (alert) {
-              return (
-                <div key={alert.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="text-sm text-slate-800">{alert.message}</p>
-                  <p className="mt-2 text-xs text-slate-500">
-                    {formatDateTime(alert.created_date)}
-                    {' | '}
-                    {DELIVERY_STATUS_LABELS[alert.delivery_status] || alert.delivery_status}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <EmptyState
-            icon={BellRing}
-            title="No alerts yet"
-            description="When a document matching your report is handed in, the alert will appear here."
-          />
-        )}
-      </section>
-
-      <section>
-        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Confirmed matches ready for collection</h2>
-        {matches.length ? (
-          <div className="space-y-3">
-            {matches.map(function (match) {
+    <div className="grid gap-section lg:grid-cols-[3fr_2fr]">
+      <div className="space-y-section">
+        <section aria-labelledby="collect-heading" className="space-y-3">
+          <h2 id="collect-heading">Confirmed matches</h2>
+          {matches.length ? (
+            matches.map(function (match) {
               const doc = documentsById[match.document_id];
+              const returned = match.match_status === 'Returned';
               return (
-                <div key={match.id} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                  <p className="flex items-center gap-2 font-heading text-sm font-semibold text-emerald-900">
-                    <ShieldCheck className="h-4 w-4" />
-                    {doc ? documentTypeLabel(doc.document_type) : 'Document'} - {match.match_status}
-                  </p>
-                  <p className="mt-2 text-sm text-emerald-900">
-                    Reference code: <span className="font-semibold">{match.reference_code || 'Included in your alert'}</span>
-                  </p>
-                  <p className="mt-1 flex items-start gap-2 text-sm text-emerald-900">
-                    <Building2 className="mt-0.5 h-4 w-4 shrink-0" />
-                    Collect from {doc ? pointName(doc.pickup_point_id) : 'the pickup point in your alert'}
-                  </p>
-                  <p className="mt-2 text-xs text-emerald-800">
-                    Bring the document number with you. When you arrive, the officer generates a one-time collection code
-                    that appears on your dashboard — show it to the officer to release the document.
-                  </p>
-                </div>
+                <Card as="article" key={match.id} className={returned ? '' : 'border-success-border'}>
+                  <CardContent className="space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="flex items-center gap-2 text-sm font-semibold">
+                        <ShieldCheck className="h-4 w-4 text-success" aria-hidden="true" />
+                        {doc ? documentTypeLabel(doc.document_type) : 'Document'}
+                      </h3>
+                      <StatusBadge status={match.match_status} kind="match" />
+                    </div>
+                    <p className="text-sm">
+                      Reference code <span className="font-mono font-semibold">{match.reference_code || 'in your alert'}</span>
+                    </p>
+                    <p className="flex items-start gap-2 text-sm">
+                      <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      {returned ? 'Collected from ' : 'Collect from '}
+                      {doc ? pointName(doc.pickup_point_id) : 'the pickup point in your alert'}
+                    </p>
+                    {returned ? null : (
+                      <p className="text-sm text-muted-foreground">
+                        Bring the document number with you. At the counter the officer creates a one-time collection code that appears on your
+                        dashboard; show it to the officer to release the document.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
               );
-            })}
-          </div>
-        ) : (
-          <EmptyState
-            icon={ShieldCheck}
-            title="No confirmed match yet"
-            description="A confirmed match will show the pickup point and your reference code here."
-          />
-        )}
-      </section>
+            })
+          ) : (
+            <EmptyState icon={ShieldCheck} title="No confirmed match yet" description="When an officer confirms a match, the pickup point and your reference code appear here." />
+          )}
+        </section>
 
-      <section>
-        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Status of my lost reports</h2>
-        {reports.length ? (
-          <div className="space-y-3">
-            {reports.map(function (report) {
-              return (
-                <div
-                  key={report.id}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-heading text-sm font-semibold text-slate-900">
-                      {documentTypeLabel(report.document_type)}
+        <section aria-labelledby="alerts-heading" className="space-y-3">
+          <h2 id="alerts-heading">Alerts sent to you</h2>
+          {alerts.length ? (
+            <ul className="divide-y divide-border rounded-lg border border-border bg-card shadow-sm">
+              {alerts.map(function (alert) {
+                return (
+                  <li key={alert.id} className="space-y-1.5 p-4">
+                    <p className="text-sm">{alert.message}</p>
+                    <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {formatDateTime(alert.created_date)}
+                      <Badge tone={alert.channel === 'SMS' ? 'info' : 'neutral'}>{alert.channel === 'SMS' ? 'SMS' : 'In the app'}</Badge>
+                      {alert.channel === 'SMS' ? <span>{DELIVERY_STATUS_LABELS[alert.delivery_status] || alert.delivery_status}</span> : null}
                     </p>
-                    <p className="truncate text-xs text-slate-500">
-                      {maskDocumentNumber(report.document_number)} | Lost on {formatDate(report.date_lost)}
-                    </p>
-                  </div>
-                  <StatusBadge status={report.status} kind="loss" />
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <EmptyState
-            icon={BellRing}
-            title="No lost reports yet"
-            description="Report your lost document to start receiving alerts."
-            action={
-              <Link to="/report-lost" className="text-sm font-semibold text-blue-900 underline">
-                Report a lost document
-              </Link>
-            }
-          />
-        )}
-      </section>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <EmptyState icon={BellRing} title="No alerts yet" description="When a document matching your report is handed in, the alert appears here." />
+          )}
+        </section>
+      </div>
+
+      <Card className="self-start">
+        <CardHeader>
+          <CardTitle>My lost reports</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {reports.length ? (
+            <ul className="divide-y divide-border">
+              {reports.map(function (report) {
+                return (
+                  <li key={report.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{documentTypeLabel(report.document_type)}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {maskDocumentNumber(report.document_number)} · lost {formatDate(report.date_lost)}
+                      </p>
+                    </div>
+                    <StatusBadge status={report.status} kind="loss" />
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={FileWarning}
+              title="No lost reports yet"
+              description="Report your lost document to start receiving alerts."
+              className="border-0 py-6"
+              action={
+                <Button size="sm" asChild>
+                  <Link to="/report-lost">Report a lost document</Link>
+                </Button>
+              }
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -182,10 +152,7 @@ function AlertsContent() {
 export default function OwnerAlerts() {
   return (
     <RoleGuard allow={['Owner']}>
-      <PageHeader
-        title="Alerts"
-        description="System alerts about your documents, the pickup point to collect from and the status of each report."
-      />
+      <PageHeader title="Alerts" description="Alerts about your documents, where to collect them, and the status of each report." />
       <AlertsContent />
     </RoleGuard>
   );
