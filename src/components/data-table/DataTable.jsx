@@ -100,7 +100,7 @@ export default function DataTable({ columns, rows, rowKey, caption, initialSort,
           No rows match. Try another search or filter.
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full text-sm">
             {caption ? <caption className="sr-only">{caption}</caption> : null}
             <thead className="border-b border-border bg-muted/60">
