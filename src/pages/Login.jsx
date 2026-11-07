@@ -1,25 +1,53 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { KeyRound, Loader2, LockKeyhole, UserPlus } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { DEMO_ACCOUNTS } from '@/api/seed';
 import { reloadLdrsUser } from '@/hooks/useLdrsUser';
+import Brand from '@/components/layout/Brand';
+import DemoAccounts from '@/components/auth/DemoAccounts';
 import DemoPhone from '@/components/security/DemoPhone';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ThemeToggle from '@/theme/ThemeToggle';
-import { KeyRound, Loader2, LockKeyhole, ShieldCheck, UserPlus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-function Field({ id, label, children, hint }) {
+const ROLE_OPTIONS = [
+  ['Owner', 'I lost a document'],
+  ['Finder', 'I found a document'],
+  ['Officer', 'I work at a station'],
+];
+const PASSWORD_HINT = 'At least 10 characters with upper and lower case letters and a number.';
+
+function FormTitle({ icon: Icon, title, description }) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      {children}
-      {hint ? <p className="text-xs text-slate-500">{hint}</p> : null}
+    <div className="space-y-1">
+      <h2 className="flex items-center gap-2 text-xl font-semibold">
+        {Icon ? <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" /> : null}
+        {title}
+      </h2>
+      {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
     </div>
+  );
+}
+
+function SubmitButton({ busy, disabled, children }) {
+  return (
+    <Button type="submit" className="w-full" disabled={busy || disabled}>
+      {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+      {children}
+    </Button>
+  );
+}
+
+function LinkButton({ onClick, children, className }) {
+  return (
+    <button type="button" onClick={onClick} className={cn('rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', className)}>
+      {children}
+    </button>
   );
 }
 
@@ -39,10 +67,16 @@ export default function Login() {
   const [consent, setConsent] = useState(false);
 
   useEffect(function () {
-    base44.auth.me().then(function () {
-      setSignedIn(true);
-    }).catch(function () {});
-    base44.functions.invoke('listPublicPickupPoints').then(setPoints).catch(function () {});
+    base44.auth
+      .me()
+      .then(function () {
+        setSignedIn(true);
+      })
+      .catch(function () {});
+    base44.functions
+      .invoke('listPublicPickupPoints')
+      .then(setPoints)
+      .catch(function () {});
   }, []);
 
   if (signedIn) return <Navigate to="/dashboard" replace />;
@@ -134,151 +168,125 @@ export default function Login() {
     });
   };
 
+  const notices = (
+    <>
+      {info ? <Alert tone="info">{info}</Alert> : null}
+      {error ? <Alert tone="danger">{error}</Alert> : null}
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-violet-800">
-      <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-4 py-10 lg:grid-cols-[1.1fr_1fr] lg:px-8">
-        <div className="text-white">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 shadow-sm">
-            <ShieldCheck className="h-8 w-8" />
-          </span>
-          <p className="mt-6 text-xs font-semibold uppercase tracking-widest text-blue-200">Project 65 · LDRS</p>
-          <h1 className="mt-2 font-heading text-3xl font-bold sm:text-4xl">Lost Documents Recovery System</h1>
-          <p className="mt-3 max-w-lg text-sm text-blue-100">
-            Found an ID or certificate? Hand it in at a police station or chief's office. Lost one? Report it and we will
-            tell you where to collect it — safely, with your identity checked before it is released.
+    <div className="min-h-screen bg-background">
+      <header className="mx-auto flex h-topbar max-w-6xl items-center justify-between px-page-x">
+        <Brand to="/login" />
+        <ThemeToggle />
+      </header>
+
+      <main className="mx-auto grid max-w-6xl items-start gap-10 px-page-x pb-16 pt-6 lg:grid-cols-[1fr_28rem] lg:pt-16">
+        <section className="max-w-xl lg:pt-6">
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Lost Documents Recovery System</h1>
+          <p className="mt-4 text-base text-muted-foreground">
+            Found an ID or certificate? Hand it in at a police station or chief's office. Lost one? Report it and LDRS tells you where to
+            collect it, with your identity checked before it is released.
           </p>
-          <ul className="mt-6 grid max-w-lg gap-2 text-sm text-blue-50 sm:grid-cols-2">
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2">
             {['Masked search results', 'One-time collection codes', 'Encrypted photographs', 'Tamper-evident audit trail'].map(function (item) {
               return (
-                <li key={item} className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2">
-                  <LockKeyhole className="h-4 w-4 shrink-0 text-blue-200" />
+                <li key={item} className="flex items-center gap-2.5 text-sm text-foreground">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-subtle text-primary-subtle-foreground">
+                    <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
+                  </span>
                   {item}
                 </li>
               );
             })}
           </ul>
-        </div>
+        </section>
 
-        <div className="relative rounded-3xl bg-card p-6 shadow-xl sm:p-8">
-          <ThemeToggle className="absolute right-4 top-4" />
+        <div className="rounded-lg border border-border bg-card p-6 shadow-md sm:p-8">
           {mode === 'login' ? (
-            <form onSubmit={submitLogin} className="space-y-4">
-              <div>
-                <h2 className="font-heading text-xl font-bold text-slate-900">Sign in</h2>
-                <p className="text-sm text-slate-500">Officers and administrators also confirm a code sent to their phone.</p>
-              </div>
-              <Field id="email" label="Email">
-                <Input id="email" type="email" autoComplete="username" value={email} onChange={function (e) { setEmail(e.target.value); }} />
-              </Field>
-              <Field id="password" label="Password">
-                <Input id="password" type="password" autoComplete="current-password" value={password} onChange={function (e) { setPassword(e.target.value); }} />
-              </Field>
-              {info ? <p className="rounded-xl bg-blue-50 p-3 text-sm text-blue-900">{info}</p> : null}
-              {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-              <Button type="submit" className="w-full rounded-xl bg-blue-900 hover:bg-blue-950" disabled={busy || !email || !password}>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            <form onSubmit={submitLogin} className="space-y-5" noValidate>
+              <FormTitle title="Sign in" description="Officers and administrators also confirm a code sent to their phone." />
+              <FormField id="email" label="Email">
+                <Input type="email" autoComplete="username" value={email} onChange={function (e) { setEmail(e.target.value); }} />
+              </FormField>
+              <FormField id="password" label="Password">
+                <Input type="password" autoComplete="current-password" value={password} onChange={function (e) { setPassword(e.target.value); }} />
+              </FormField>
+              {notices}
+              <SubmitButton busy={busy} disabled={!email || !password}>
                 Sign in
-              </Button>
-              <div className="flex flex-wrap justify-between gap-2 text-sm">
-                <button type="button" className="font-semibold text-blue-900 hover:underline" onClick={function () { go('register'); }}>
-                  Create an account
-                </button>
-                <button type="button" className="text-slate-500 hover:underline" onClick={function () { go('forgot'); }}>
+              </SubmitButton>
+              <div className="flex flex-wrap justify-between gap-2">
+                <LinkButton onClick={function () { go('register'); }}>Create an account</LinkButton>
+                <LinkButton onClick={function () { go('forgot'); }} className="text-muted-foreground">
                   Forgot password?
-                </button>
+                </LinkButton>
               </div>
-
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Demo accounts (mock data only)</p>
-                <div className="mt-2 grid gap-1.5">
-                  {DEMO_ACCOUNTS.map(function (account) {
-                    return (
-                      <button
-                        key={account.email}
-                        type="button"
-                        className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs hover:bg-white"
-                        onClick={function () {
-                          setEmail(account.email);
-                          setPassword(account.password);
-                        }}
-                      >
-                        <span className="font-semibold text-slate-700">{account.label}</span>
-                        <span className="text-slate-500">{account.note || account.email}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="mt-2 text-[11px] text-slate-500">Login codes appear in the "Demo SMS" phone at the bottom right.</p>
-              </div>
+              <DemoAccounts
+                onPick={function (account) {
+                  setEmail(account.email);
+                  setPassword(account.password);
+                }}
+              />
             </form>
           ) : null}
 
           {mode === 'two_step' ? (
-            <form onSubmit={submitTwoStep} className="space-y-4">
-              <div>
-                <h2 className="flex items-center gap-2 font-heading text-xl font-bold text-slate-900">
-                  <KeyRound className="h-5 w-5" /> Two-step login
-                </h2>
-                <p className="text-sm text-slate-500">The code expires in 5 minutes. Three wrong codes block it.</p>
-              </div>
-              {info ? <p className="rounded-xl bg-blue-50 p-3 text-sm text-blue-900">{info}</p> : null}
-              <Field id="code" label="Six-digit code">
-                <Input id="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={function (e) { setCode(e.target.value.replace(/\D/g, '')); }} />
-              </Field>
-              {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-              <Button type="submit" className="w-full rounded-xl bg-blue-900 hover:bg-blue-950" disabled={busy || code.length !== 6}>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            <form onSubmit={submitTwoStep} className="space-y-5" noValidate>
+              <FormTitle icon={KeyRound} title="Two-step sign-in" description="The code expires in 5 minutes. Three wrong codes block it." />
+              <FormField id="code" label="Six-digit code">
+                <Input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={function (e) { setCode(e.target.value.replace(/\D/g, '')); }} />
+              </FormField>
+              {notices}
+              <SubmitButton busy={busy} disabled={code.length !== 6}>
                 Confirm and sign in
-              </Button>
-              <button type="button" className="text-sm text-slate-500 hover:underline" onClick={function () { go('login'); }}>
-                Back to sign in
-              </button>
+              </SubmitButton>
+              <LinkButton onClick={function () { go('login'); }}>Back to sign in</LinkButton>
             </form>
           ) : null}
 
           {mode === 'register' ? (
-            <form onSubmit={submitRegister} className="space-y-4">
-              <div>
-                <h2 className="flex items-center gap-2 font-heading text-xl font-bold text-slate-900">
-                  <UserPlus className="h-5 w-5" /> Create an account
-                </h2>
-                <p className="text-sm text-slate-500">Administrator accounts are created by the LDRS team only.</p>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  ['Owner', 'I lost a document'],
-                  ['Finder', 'I found a document'],
-                  ['Officer', 'I work at a station'],
-                ].map(function (option) {
-                  const active = reg.ldrs_role === option[0];
-                  return (
-                    <button
-                      key={option[0]}
-                      type="button"
-                      onClick={function () { setRegField('ldrs_role', option[0]); }}
-                      className={cn('rounded-xl border p-2.5 text-left text-xs', active ? 'border-blue-900 bg-blue-50 text-blue-900' : 'border-slate-200 text-slate-600 hover:border-blue-300')}
-                    >
-                      <span className="block font-semibold">{option[0]}</span>
-                      {option[1]}
-                    </button>
-                  );
-                })}
-              </div>
-              <Field id="reg_name" label="Full name">
-                <Input id="reg_name" value={reg.full_name} onChange={function (e) { setRegField('full_name', e.target.value); }} />
-              </Field>
+            <form onSubmit={submitRegister} className="space-y-5" noValidate>
+              <FormTitle icon={UserPlus} title="Create an account" description="Administrator accounts are created by the LDRS team only." />
+              <fieldset>
+                <legend className="mb-2 text-sm font-medium">How will you use LDRS?</legend>
+                <div className="grid grid-cols-3 gap-2">
+                  {ROLE_OPTIONS.map(function (option) {
+                    const active = reg.ldrs_role === option[0];
+                    return (
+                      <button
+                        key={option[0]}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={function () { setRegField('ldrs_role', option[0]); }}
+                        className={cn(
+                          'rounded-md border p-2.5 text-left text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                          active ? 'border-primary bg-primary-subtle text-primary-subtle-foreground' : 'border-border text-muted-foreground hover:bg-muted',
+                        )}
+                      >
+                        <span className="block text-sm font-medium">{option[0]}</span>
+                        {option[1]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+              <FormField id="reg_name" label="Full name">
+                <Input autoComplete="name" value={reg.full_name} onChange={function (e) { setRegField('full_name', e.target.value); }} />
+              </FormField>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field id="reg_email" label="Email">
-                  <Input id="reg_email" type="email" autoComplete="username" value={reg.email} onChange={function (e) { setRegField('email', e.target.value); }} />
-                </Field>
-                <Field id="reg_phone" label={reg.ldrs_role === 'Officer' ? 'Phone number' : 'Phone number (optional)'}>
-                  <Input id="reg_phone" value={reg.phone} placeholder="0712 345 678" onChange={function (e) { setRegField('phone', e.target.value); }} />
-                </Field>
+                <FormField id="reg_email" label="Email">
+                  <Input type="email" autoComplete="email" value={reg.email} onChange={function (e) { setRegField('email', e.target.value); }} />
+                </FormField>
+                <FormField id="reg_phone" label="Phone number" optional={reg.ldrs_role !== 'Officer'}>
+                  <Input type="tel" autoComplete="tel" value={reg.phone} placeholder="0712 345 678" onChange={function (e) { setRegField('phone', e.target.value); }} />
+                </FormField>
               </div>
               {reg.ldrs_role === 'Officer' ? (
-                <Field id="reg_point" label="Station you work at" hint="An administrator confirms this before your account can release documents.">
+                <FormField id="reg_point" label="Station you work at" hint="An administrator confirms this before your account can release documents.">
                   <Select value={reg.pickup_point_id} onValueChange={function (value) { setRegField('pickup_point_id', value); }}>
-                    <SelectTrigger id="reg_point">
+                    <SelectTrigger>
                       <SelectValue placeholder="Choose your station" />
                     </SelectTrigger>
                     <SelectContent>
@@ -291,14 +299,14 @@ export default function Login() {
                       })}
                     </SelectContent>
                   </Select>
-                </Field>
+                </FormField>
               ) : null}
-              <Field id="reg_password" label="Password" hint="At least 10 characters with upper and lower case letters and a number.">
-                <Input id="reg_password" type="password" autoComplete="new-password" value={reg.password} onChange={function (e) { setRegField('password', e.target.value); }} />
-              </Field>
-              <Field id="reg_language" label="Language for SMS and alerts">
+              <FormField id="reg_password" label="Password" hint={PASSWORD_HINT}>
+                <Input type="password" autoComplete="new-password" value={reg.password} onChange={function (e) { setRegField('password', e.target.value); }} />
+              </FormField>
+              <FormField id="reg_language" label="Language for SMS and alerts">
                 <Select value={reg.language} onValueChange={function (value) { setRegField('language', value); }}>
-                  <SelectTrigger id="reg_language">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -306,68 +314,54 @@ export default function Login() {
                     <SelectItem value="sw">Kiswahili</SelectItem>
                   </SelectContent>
                 </Select>
-              </Field>
-              <label htmlFor="reg_consent" className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              </FormField>
+              <label htmlFor="reg_consent" className="flex items-start gap-3 rounded-md border border-border bg-muted/50 p-3">
                 <Checkbox id="reg_consent" checked={consent} onCheckedChange={function (v) { setConsent(Boolean(v)); }} className="mt-0.5" />
-                <span className="text-xs leading-relaxed text-slate-600">
-                  I agree that LDRS stores my name, email and phone number to run my account, as allowed by the Data Protection Act, 2019. I can ask for a copy, correction or removal at any time.
+                <span className="text-xs leading-relaxed text-muted-foreground">
+                  I agree that LDRS stores my name, email and phone number to run my account, as allowed by the Data Protection Act, 2019. I
+                  can ask for a copy, correction or removal at any time.
                 </span>
               </label>
-              {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-              <Button type="submit" className="w-full rounded-xl bg-blue-900 hover:bg-blue-950" disabled={busy || !consent}>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {notices}
+              <SubmitButton busy={busy} disabled={!consent}>
                 Create account
-              </Button>
-              <button type="button" className="text-sm text-slate-500 hover:underline" onClick={function () { go('login'); }}>
-                I already have an account
-              </button>
+              </SubmitButton>
+              <LinkButton onClick={function () { go('login'); }}>I already have an account</LinkButton>
             </form>
           ) : null}
 
           {mode === 'forgot' ? (
-            <form onSubmit={submitForgot} className="space-y-4">
-              <div>
-                <h2 className="font-heading text-xl font-bold text-slate-900">Reset your password</h2>
-                <p className="text-sm text-slate-500">We send a reset code to the phone number on your account.</p>
-              </div>
-              <Field id="forgot_email" label="Email">
-                <Input id="forgot_email" type="email" value={email} onChange={function (e) { setEmail(e.target.value); }} />
-              </Field>
-              {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-              <Button type="submit" className="w-full rounded-xl bg-blue-900 hover:bg-blue-950" disabled={busy || !email}>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            <form onSubmit={submitForgot} className="space-y-5" noValidate>
+              <FormTitle title="Reset your password" description="We send a reset code to the phone number on your account." />
+              <FormField id="forgot_email" label="Email">
+                <Input type="email" autoComplete="username" value={email} onChange={function (e) { setEmail(e.target.value); }} />
+              </FormField>
+              {notices}
+              <SubmitButton busy={busy} disabled={!email}>
                 Send reset code
-              </Button>
-              <button type="button" className="text-sm text-slate-500 hover:underline" onClick={function () { go('login'); }}>
-                Back to sign in
-              </button>
+              </SubmitButton>
+              <LinkButton onClick={function () { go('login'); }}>Back to sign in</LinkButton>
             </form>
           ) : null}
 
           {mode === 'reset' ? (
-            <form onSubmit={submitReset} className="space-y-4">
-              <div>
-                <h2 className="font-heading text-xl font-bold text-slate-900">Choose a new password</h2>
-              </div>
-              {info ? <p className="rounded-xl bg-blue-50 p-3 text-sm text-blue-900">{info}</p> : null}
-              <Field id="reset_code" label="Reset code">
-                <Input id="reset_code" inputMode="numeric" maxLength={6} value={code} onChange={function (e) { setCode(e.target.value.replace(/\D/g, '')); }} />
-              </Field>
-              <Field id="reset_password" label="New password" hint="At least 10 characters with upper and lower case letters and a number.">
-                <Input id="reset_password" type="password" autoComplete="new-password" value={password} onChange={function (e) { setPassword(e.target.value); }} />
-              </Field>
-              {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-              <Button type="submit" className="w-full rounded-xl bg-blue-900 hover:bg-blue-950" disabled={busy || code.length !== 6 || !password}>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            <form onSubmit={submitReset} className="space-y-5" noValidate>
+              <FormTitle title="Choose a new password" />
+              <FormField id="reset_code" label="Reset code">
+                <Input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={function (e) { setCode(e.target.value.replace(/\D/g, '')); }} />
+              </FormField>
+              <FormField id="reset_password" label="New password" hint={PASSWORD_HINT}>
+                <Input type="password" autoComplete="new-password" value={password} onChange={function (e) { setPassword(e.target.value); }} />
+              </FormField>
+              {notices}
+              <SubmitButton busy={busy} disabled={code.length !== 6 || !password}>
                 Change password
-              </Button>
-              <button type="button" className="text-sm text-slate-500 hover:underline" onClick={function () { go('login'); }}>
-                Back to sign in
-              </button>
+              </SubmitButton>
+              <LinkButton onClick={function () { go('login'); }}>Back to sign in</LinkButton>
             </form>
           ) : null}
         </div>
-      </div>
+      </main>
       <DemoPhone />
     </div>
   );
