@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { useEffect, useId, useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, ArrowUpDown, SearchX } from 'lucide-react';
+import { SearchInput } from '@/components/ui/search-input';
+import Pagination from '@/components/data-table/Pagination';
 import { cn } from '@/lib/utils';
 
 function compare(left, right) {
@@ -11,28 +13,58 @@ function compare(left, right) {
 }
 
 /**
- * Table with sortable columns.
+ * Table with sortable columns, an optional search box and pagination.
  *
  * columns: [{ key, header, cell(row), sortValue?(row), className?, align? }]
  * A column is sortable when it has sortValue. initialSort: { key, direction: 'asc' | 'desc' }.
+ * search: { label, placeholder, text(row) } filters rows by the text it returns.
+ * toolbar: extra filters shown next to the search box.
  */
-export default function DataTable({ columns, rows, rowKey, caption, initialSort, emptyState }) {
+export default function DataTable({ columns, rows, rowKey, caption, initialSort, emptyState, search, toolbar, pageSize = 10 }) {
+  const searchId = useId();
   const [sort, setSort] = useState(initialSort || null);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+
+  const filtered = useMemo(
+    function () {
+      const term = query.trim().toLowerCase();
+      if (!search || !term) return rows;
+      return rows.filter(function (row) {
+        return String(search.text(row) || '').toLowerCase().indexOf(term) >= 0;
+      });
+    },
+    [rows, query, search],
+  );
+
+  // Go back to the first page when the search or the set of rows changes. Callers often
+  // pass a freshly filtered array on every render, so the length is compared, not the array.
+  const rowCount = rows.length;
+  useEffect(
+    function () {
+      setPage(1);
+    },
+    [query, rowCount],
+  );
 
   const sorted = useMemo(
     function () {
-      if (!sort) return rows;
+      if (!sort) return filtered;
       const column = columns.find(function (item) {
         return item.key === sort.key;
       });
-      if (!column || !column.sortValue) return rows;
+      if (!column || !column.sortValue) return filtered;
       const factor = sort.direction === 'desc' ? -1 : 1;
-      return rows.slice().sort(function (a, b) {
+      return filtered.slice().sort(function (a, b) {
         return compare(column.sortValue(a), column.sortValue(b)) * factor;
       });
     },
-    [rows, columns, sort],
+    [filtered, columns, sort],
   );
+
+  const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visible = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const toggleSort = function (key) {
     setSort(function (current) {
@@ -45,24 +77,47 @@ export default function DataTable({ columns, rows, rowKey, caption, initialSort,
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          {caption ? <caption className="sr-only">{caption}</caption> : null}
-          <thead className="border-b border-border bg-muted/60">
-            <tr>
-              {columns.map(function (column) {
-                const active = sort && sort.key === column.key;
-                const ariaSort = active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : column.sortValue ? 'none' : undefined;
-                const Icon = active ? (sort.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
-                return (
-                  <th
-                    key={column.key}
-                    scope="col"
-                    aria-sort={ariaSort}
-                    className={cn(
-                      'whitespace-nowrap px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground',
-                      column.align === 'right' && 'text-right',
-                      column.headerClassName,
+      {search || toolbar ? (
+        <div className="flex flex-wrap items-center gap-3 border-b border-border p-3">
+          {search ? (
+            <SearchInput
+              id={searchId}
+              label={search.label}
+              placeholder={search.placeholder}
+              value={query}
+              className="min-w-[14rem] flex-1"
+              onChange={function (event) {
+                setQuery(event.target.value);
+              }}
+            />
+          ) : null}
+          {toolbar}
+        </div>
+      ) : null}
+      {!visible.length ? (
+        <div className="flex flex-col items-center gap-2 px-6 py-10 text-center text-sm text-muted-foreground">
+          <SearchX className="h-5 w-5" aria-hidden="true" />
+          No rows match. Try another search or filter.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            {caption ? <caption className="sr-only">{caption}</caption> : null}
+            <thead className="border-b border-border bg-muted/60">
+              <tr>
+                {columns.map(function (column) {
+                  const active = sort && sort.key === column.key;
+                  const ariaSort = active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : column.sortValue ? 'none' : undefined;
+                  const Icon = active ? (sort.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+                  return (
+                    <th
+                      key={column.key}
+                      scope="col"
+                      aria-sort={ariaSort}
+                      className={cn(
+                        'whitespace-nowrap px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground',
+                        column.align === 'right' && 'text-right',
+                        column.headerClassName,
                     )}
                   >
                     {column.sortValue ? (
@@ -88,7 +143,7 @@ export default function DataTable({ columns, rows, rowKey, caption, initialSort,
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {sorted.map(function (row) {
+            {visible.map(function (row) {
               return (
                 <tr key={rowKey(row)} className="transition-colors hover:bg-muted/40">
                   {columns.map(function (column) {
@@ -104,6 +159,8 @@ export default function DataTable({ columns, rows, rowKey, caption, initialSort,
           </tbody>
         </table>
       </div>
+      )}
+      <Pagination page={currentPage} pageCount={pageCount} total={sorted.length} pageSize={pageSize} onPageChange={setPage} />
     </div>
   );
 }
