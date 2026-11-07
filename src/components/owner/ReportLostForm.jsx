@@ -167,88 +167,89 @@ export default function ReportLostForm({ user }) {
   }
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-section">
+    <div className="space-y-section">
       {!phoneOk ? <PhoneVerification user={user} onVerified={reload} /> : null}
+      <form onSubmit={submit} noValidate className="space-y-section">
+        <Card as="section">
+          <CardHeader>
+            <div>
+              <CardTitle>The document</CardTitle>
+              <CardDescription>Type the details exactly as they are printed, so the match works.</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4 pt-0 sm:grid-cols-2">
+            <FormField id="document_type" label="Document type" error={fields.show('document_type')} className="sm:col-span-2">
+              <Select value={form.document_type} onValueChange={function (value) { setField('document_type', value); }}>
+                <SelectTrigger onBlur={fields.touch('document_type')}>
+                  <SelectValue placeholder="Select the type of document" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DOCUMENT_TYPES.map(function (type) {
+                    return (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </FormField>
+            <FormField id="owner_name" label="Your full name as printed on the document" error={fields.show('owner_name')} className="sm:col-span-2">
+              <Input value={form.owner_name} autoComplete="name" onBlur={fields.touch('owner_name')} onChange={function (event) { setField('owner_name', event.target.value); }} />
+            </FormField>
+            <FormField
+              id="document_number"
+              label={idLabelFor(form.document_type)}
+              error={fields.show('document_number')}
+              hint={'Used only to match you with your document and never shown publicly.' + (form.document_type ? ' Format: ' + numberFormatHint(form.document_type) + '.' : '')}
+            >
+              <Input value={form.document_number} autoComplete="off" onBlur={fields.touch('document_number')} onChange={function (event) { setField('document_number', event.target.value); }} />
+            </FormField>
+            <FormField id="date_lost" label="Date the document was lost" error={fields.show('date_lost')}>
+              <Input type="date" max={todayIso()} value={form.date_lost} onBlur={fields.touch('date_lost')} onChange={function (event) { setField('date_lost', event.target.value); }} />
+            </FormField>
+          </CardContent>
+        </Card>
 
-      <Card as="section">
-        <CardHeader>
-          <div>
-            <CardTitle>The document</CardTitle>
-            <CardDescription>Type the details exactly as they are printed, so the match works.</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-4 pt-0 sm:grid-cols-2">
-          <FormField id="document_type" label="Document type" error={fields.show('document_type')} className="sm:col-span-2">
-            <Select value={form.document_type} onValueChange={function (value) { setField('document_type', value); }}>
-              <SelectTrigger onBlur={fields.touch('document_type')}>
-                <SelectValue placeholder="Select the type of document" />
-              </SelectTrigger>
-              <SelectContent>
-                {DOCUMENT_TYPES.map(function (type) {
-                  return (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </FormField>
-          <FormField id="owner_name" label="Your full name as printed on the document" error={fields.show('owner_name')} className="sm:col-span-2">
-            <Input value={form.owner_name} autoComplete="name" onBlur={fields.touch('owner_name')} onChange={function (event) { setField('owner_name', event.target.value); }} />
-          </FormField>
-          <FormField
-            id="document_number"
-            label={idLabelFor(form.document_type)}
-            error={fields.show('document_number')}
-            hint={'Used only to match you with your document and never shown publicly.' + (form.document_type ? ' Format: ' + numberFormatHint(form.document_type) + '.' : '')}
-          >
-            <Input value={form.document_number} autoComplete="off" onBlur={fields.touch('document_number')} onChange={function (event) { setField('document_number', event.target.value); }} />
-          </FormField>
-          <FormField id="date_lost" label="Date the document was lost" error={fields.show('date_lost')}>
-            <Input type="date" max={todayIso()} value={form.date_lost} onBlur={fields.touch('date_lost')} onChange={function (event) { setField('date_lost', event.target.value); }} />
-          </FormField>
-        </CardContent>
-      </Card>
+        <Card as="section">
+          <CardHeader>
+            <CardTitle>How we reach you</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-0">
+            <FormField id="phone" label="Phone number" hint="We use this number only to contact you about this report.">
+              <Input value={phoneOk ? maskPhone(user.phone) + ' (verified)' : 'Not verified yet'} readOnly disabled />
+            </FormField>
+            <div className="space-y-1.5">
+              <label htmlFor="consent" className="flex items-start gap-3 rounded-md border border-border bg-muted/50 p-4">
+                <Checkbox
+                  id="consent"
+                  checked={consent}
+                  aria-invalid={fields.show('consent') ? true : undefined}
+                  aria-describedby={fields.show('consent') ? 'consent-error' : undefined}
+                  onCheckedChange={function (value) { setConsent(Boolean(value)); }}
+                  className="mt-0.5"
+                />
+                <span className="text-sm text-muted-foreground">
+                  I confirm this phone number belongs to me. I consent to LDRS storing my name, document number and phone number only to help
+                  recover this document, as required by the Data Protection Act, 2019.
+                </span>
+              </label>
+              {fields.show('consent') ? (
+                <p id="consent-error" className="text-xs font-medium text-danger-subtle-foreground">
+                  {fields.show('consent')}
+                </p>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card as="section">
-        <CardHeader>
-          <CardTitle>How we reach you</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-0">
-          <FormField id="phone" label="Phone number" hint="We use this number only to contact you about this report.">
-            <Input value={phoneOk ? maskPhone(user.phone) + ' (verified)' : 'Not verified yet'} readOnly disabled />
-          </FormField>
-          <div className="space-y-1.5">
-            <label htmlFor="consent" className="flex items-start gap-3 rounded-md border border-border bg-muted/50 p-4">
-              <Checkbox
-                id="consent"
-                checked={consent}
-                aria-invalid={fields.show('consent') ? true : undefined}
-                aria-describedby={fields.show('consent') ? 'consent-error' : undefined}
-                onCheckedChange={function (value) { setConsent(Boolean(value)); }}
-                className="mt-0.5"
-              />
-              <span className="text-sm text-muted-foreground">
-                I confirm this phone number belongs to me. I consent to LDRS storing my name, document number and phone number only to help
-                recover this document, as required by the Data Protection Act, 2019.
-              </span>
-            </label>
-            {fields.show('consent') ? (
-              <p id="consent-error" className="text-xs font-medium text-danger-subtle-foreground">
-                {fields.show('consent')}
-              </p>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
+        {error ? <Alert tone="danger">{error}</Alert> : null}
 
-      {error ? <Alert tone="danger">{error}</Alert> : null}
-
-      <Button type="submit" disabled={submitting || !phoneOk}>
-        {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
-        Submit lost report
-      </Button>
-    </form>
+        <Button type="submit" disabled={submitting || !phoneOk}>
+          {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+          Submit lost report
+        </Button>
+      </form>
+    </div>
   );
 }
