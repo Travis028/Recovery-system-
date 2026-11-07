@@ -41,16 +41,19 @@ function DocumentDetailContent() {
       setDoc(record);
       setPoint(await base44.entities.PickupPoint.get(record.pickup_point_id).catch(function () { return null; }));
       setMatches(role === 'Finder' ? [] : await base44.entities.Match.filter({ document_id: documentId }, { sort: '-created_date' }));
+      return record;
     } catch {
       setDoc(null);
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(function () {
-    load().then(function () {
-      logAction({ action: AUDIT_ACTIONS.RECORD_OPENED, details: 'Document record ' + documentId.slice(0, 8) + ' opened', user });
+    // Only a record the user was actually shown counts as opened.
+    load().then(function (record) {
+      if (record) logAction({ action: AUDIT_ACTIONS.RECORD_OPENED, details: 'Document record ' + documentId.slice(0, 8) + ' opened', user });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId]);
