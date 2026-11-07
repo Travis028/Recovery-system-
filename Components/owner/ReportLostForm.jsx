@@ -1,0 +1,279 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import PhoneVerification from '@/components/security/PhoneVerification';
+import { DOCUMENT_TYPES, idLabelFor, documentTypeLabel, formatDate, maskPhone } from '@/lib/ldrs';
+import { checkDocumentNumber, numberFormatHint } from '@/lib/validation';
+import useLdrsUser from '@/hooks/useLdrsUser';
+import { CheckCircle2, Loader2, FileSearch } from 'lucide-react';
+
+const today = new Date().toISOString().slice(0, 10);
+
+export default function ReportLostForm({ user }) {
+  const { reload } = useLdrsUser();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [consent, setConsent] = useState(false);
+  const [saved, setSaved] = useState(null);
+  const [matchSummary, setMatchSummary] = useState({ exact: 0, fuzzy: 0, pickupPoint: '' });
+  const [form, setForm] = useState({
+    document_type: '',
+    owner_name: user.full_name || '',
+    document_number: '',
+    phone: user.phone || '',
+    date_lost: today,
+  });
+
+  const setField = function (field, value) {
+    setForm(function (previous) {
+      return { ...previous, [field]: value };
+    });
+  };
+
+  const phoneOk = Boolean(user.phone_verified && user.phone);
+  const numberProblem = form.document_type && form.document_number.trim() ? checkDocumentNumber(form.document_type, form.document_number) : '';
+  const complete =
+    form.document_type &&
+    form.owner_name.trim() &&
+    form.document_number.trim() &&
+    !numberProblem &&
+    phoneOk &&
+    form.date_lost &&
+    consent;
+
+  const submit = async function (event) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError('');
+    try {
+      // Checked on the server: verified phone, consent, number format, report limit per phone.
+      const result = await base44.functions.invoke('submitLossReport', {
+        document_type: form.document_type,
+        owner_name: form.owner_name.trim(),
+        document_number: form.document_number.trim(),
+        date_lost: form.date_lost,
+        consent,
+      });
+      const created = result.report;
+      const exact = result.matches.filter(function (item) {
+        return item.match_type === 'Exact';
+      });
+      const fuzzy = result.matches.filter(function (item) {
+        return item.match_type === 'Fuzzy';
+      });
+      setMatchSummary({
+        exact: exact.length,
+        fuzzy: fuzzy.length,
+        pickupPoint: exact.length ? exact[0].pickup_point_name : '',
+      });
+      setSaved(created);
+    } catch (submitError) {
+      console.error('Lost report could not be saved', submitError);
+      setError(submitError.message || 'The report could not be saved. Please check your connection and try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (saved) {
+    return (
+      <div className="rounded-3xl border border-emerald-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+            <CheckCircle2 className="h-6 w-6" />
+          </span>
+          <div>
+            <h2 className="font-heading text-xl font-bold text-slate-900">Lost report submitted</h2>
+            <p className="text-sm text-slate-500">
+              We will alert you as soon as a document matching this report is handed in.
+            </p>
+          </div>
+        </div>
+
+        <dl className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Report reference</dt>
+            <dd className="mt-1 text-sm font-medium text-slate-800">{saved.id.slice(0, 8).toUpperCase()}</dd>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Report status</dt>
+            <dd className="mt-1 text-sm font-medium text-slate-800">Open - waiting for a match</dd>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Document type</dt>
+            <dd className="mt-1 text-sm font-medium text-slate-800">{documentTypeLabel(saved.document_type)}</dd>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Date lost</dt>
+            <dd className="mt-1 text-sm font-medium text-slate-800">{formatDate(saved.date_lost)}</dd>
+          </div>
+        </dl>
+
+        {matchSummary.exact ? (
+          <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+            A document already held at {matchSummary.pickupPoint || 'a pickup point'} matches this report. An alert with
+            the reference code and the pickup point has been added to your Alerts screen. Carry the document number with
+            you when you collect it.
+          </p>
+        ) : null}
+        {!matchSummary.exact && matchSummary.fuzzy ? (
+          <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            A possible match for a document already handed in is being reviewed by an officer. You will be alerted once
+            it is confirmed.
+          </p>
+        ) : null}
+        {!matchSummary.exact && !matchSummary.fuzzy ? (
+          <p className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+            No matching document has been handed in yet. You can search the documents that have been found at any time.
+          </p>
+        ) : null}
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Button className="gap-2 rounded-xl bg-blue-900 hover:bg-blue-950" asChild>
+            <Link to="/search">
+              <FileSearch className="h-4 w-4" />
+              Search found documents now
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            onClick={function () {
+              setSaved(null);
+              setConsent(false);
+              setMatchSummary({ exact: 0, fuzzy: 0, pickupPoint: '' });
+              setForm({
+                document_type: '',
+                owner_name: user.full_name || '',
+                document_number: '',
+                phone: user.phone || '',
+                date_lost: today,
+              });
+            }}
+          >
+            Report another document
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      {!phoneOk ? (
+        <div className="mb-5">
+          <PhoneVerification user={user} onVerified={reload} />
+        </div>
+      ) : null}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="document_type">Document type</Label>
+          <Select
+            value={form.document_type}
+            onValueChange={function (value) {
+              setField('document_type', value);
+            }}
+          >
+            <SelectTrigger id="document_type">
+              <SelectValue placeholder="Select the type of document" />
+            </SelectTrigger>
+            <SelectContent>
+              {DOCUMENT_TYPES.map(function (type) {
+                return (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="owner_name">Your full name as printed on the document</Label>
+          <Input
+            id="owner_name"
+            value={form.owner_name}
+            placeholder="Example: MARY WANJIRU KAMAU"
+            onChange={function (event) {
+              setField('owner_name', event.target.value);
+            }}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="document_number">{idLabelFor(form.document_type)}</Label>
+          <Input
+            id="document_number"
+            value={form.document_number}
+            placeholder="Type the number exactly as printed"
+            onChange={function (event) {
+              setField('document_number', event.target.value);
+            }}
+          />
+          {numberProblem ? (
+            <p className="text-xs text-rose-600">{numberProblem}</p>
+          ) : (
+            <p className="text-xs text-slate-500">
+              Used only to match you with your document. It is never shown publicly.
+              {form.document_type ? ' Format: ' + numberFormatHint(form.document_type) + '.' : ''}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone number</Label>
+          <Input id="phone" value={phoneOk ? maskPhone(user.phone) + ' (verified)' : 'Not verified yet'} readOnly disabled />
+          <p className="text-xs text-slate-500">
+            We use this number only to contact you about this report. It is never shown publicly.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="date_lost">Date the document was lost</Label>
+          <Input
+            id="date_lost"
+            type="date"
+            max={today}
+            value={form.date_lost}
+            onChange={function (event) {
+              setField('date_lost', event.target.value);
+            }}
+          />
+        </div>
+      </div>
+
+      <label
+        htmlFor="consent"
+        className="mt-5 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+      >
+        <Checkbox
+          id="consent"
+          checked={consent}
+          onCheckedChange={function (value) {
+            setConsent(Boolean(value));
+          }}
+          className="mt-0.5"
+        />
+        <span className="text-xs leading-relaxed text-slate-600">
+          I confirm this phone number belongs to me. I consent to LDRS storing my name, document number and phone number
+          only to help recover this document, as required by the Data Protection Act, 2019.
+        </span>
+      </label>
+
+      {error ? <p className="mt-4 text-sm text-rose-600">{error}</p> : null}
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Button type="submit" className="rounded-xl bg-blue-900 hover:bg-blue-950" disabled={!complete || submitting}>
+          {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Submit lost report
+        </Button>
+      </div>
+    </form>
+  );
+}

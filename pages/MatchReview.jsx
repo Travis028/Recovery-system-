@@ -1,0 +1,349 @@
+import { useEffect, useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import RoleGuard from '@/components/RoleGuard';
+import PageHeader from '@/components/PageHeader';
+import EmptyState from '@/components/EmptyState';
+import Loader from '@/components/Loader';
+import MatchCard from '@/components/matches/MatchCard';
+import ClaimCard from '@/components/claims/ClaimCard';
+import useLdrsUser from '@/hooks/useLdrsUser';
+import { confirmMatch, rejectMatch } from '@/lib/matching';
+import { approveClaim, rejectClaim } from '@/lib/claims';
+import { sendOwnerNotification, foundDocumentAlert } from '@/lib/notifications';
+import { logAction, AUDIT_ACTIONS } from '@/lib/audit';
+import { useToast } from '@/components/ui/use-toast';
+import { AlertTriangle, ClipboardCheck, ShieldCheck } from 'lucide-react';
+
+function MatchReviewContent() {
+  const { user, role } = useLdrsUser();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [pending, setPending] = useState([]);
+  const [confirmed, setConfirmed] = useState([]);
+  const [pendingClaims, setPendingClaims] = useState([]);
+  const [claimDocsById, setClaimDocsById] = useState({});
+  const [documentsById, setDocumentsById] = useState({});
+  const [reportsById, setReportsById] = useState({});
+  const [pointsById, setPointsById] = useState({});
+  const [busyId, setBusyId] = useState(null);
+  const [error, setError] = useState('');
+
+  const load = async function () {
+    setLoading(true);
+    setError('');
+    try {
+      const stationScoped = role === 'Officer' && user.pickup_point_id;
+      let documentIds = null;
+
+      if (stationScoped) {
+        const stationDocuments = await base44.entities.Document.filter({ pickup_point_id: user.pickup_point_id });
+        documentIds = (stationDocuments.items || stationDocuments || []).map(function (doc) {
+          return doc.id;
+        });
+        if (!documentIds.length) {
+          setPending([]);
+          setConfirmed([]);
+          setPendingClaims([]);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const scope = documentIds ? { document_id: { $in: documentIds } } : {};
+      const results = await Promise.all([
+        base44.entities.Match.filter({ ...scope, match_status: 'Pending' }, { sort: '-created_date', limit: 50 }),
+        base44.entities.Match.filter({ ...scope, match_status: 'Confirmed' }, { sort: '-created_date', limit: 50 }),
+      ]);
+      const pendingItems = results[0].items || [];
+      const confirmedItems = results[1].items || [];
+      const all = pendingItems.concat(confirmedItems);
+
+      const docIds = [...new Set(all.map((match) => match.document_id).filter(Boolean))];
+      const reportIds = [...new Set(all.map((match) => match.loss_report_id).filter(Boolean))];
+
+      const docMap = {};
+      if (docIds.length) {
+        const docList = await base44.entities.Document.filter({ id: { $in: docIds } });
+        (docList.items || []).forEach(function (doc) {
+          docMap[doc.id] = doc;
+        });
+      }
+
+      const reportMap = {};
+      if (reportIds.length) {
+        const reportList = await base44.entities.LossReport.filter({ id: { $in: reportIds } });
+        (reportList.items || []).forEach(function (report) {
+          reportMap[report.id] = report;
+        });
+      }
+
+      const pointMap = {};
+      const pointList = await base44.entities.PickupPoint.list();
+      (Array.isArray(pointList) ? pointList : []).forEach(function (point) {
+        pointMap[point.id] = point;
+      });
+
+      const claimPage = await base44.entities.Claim.filter({ status: 'Pending' }, { sort: '-created_date', limit: 50 });
+      const claimItems = (claimPage.items || []).filter(function (claim) {
+        return !documentIds || documentIds.indexOf(claim.document_id) >= 0;
+      });
+      const claimDocs = {};
+      await Promise.all(
+        claimItems.map(async function (claim) {
+          if (!claim.document_id) return;
+          try {
+            claimDocs[claim.document_id] = await base44.entities.Document.get(claim.document_id);
+          } catch (docError) {
+            console.error('Claimed document could not be loaded', docError);
+          }
+        }),
+      );
+
+      setPending(pendingItems);
+      setConfirmed(confirmedItems);
+      setPendingClaims(claimItems);
+      setClaimDocsById(claimDocs);
+      setDocumentsById(docMap);
+      setReportsById(reportMap);
+      setPointsById(pointMap);
+    } catch (loadError) {
+      console.error('Matches could not be loaded', loadError);
+      setError('Matches could not be loaded. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(
+    function () {
+      load();
+    },
+    [role, user.id, user.pickup_point_id],
+  );
+
+  const handleConfirm = async function (match) {
+    setBusyId(match.id);
+    try {
+      const doc = documentsById[match.document_id];
+      const report = reportsById[match.loss_report_id];
+      const point = doc ? pointsById[doc.pickup_point_id] : null;
+      await confirmMatch({ match, document: doc, report, pickupPoint: point, actor: user });
+      await load();
+      toast({ title: 'Match confirmed', description: 'The owner has been alerted with the pickup point and reference code.' });
+    } catch (confirmError) {
+      console.error('Match could not be confirmed', confirmError);
+      toast({ title: 'Could not confirm the match', description: 'Please try again.', variant: 'destructive' });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleReject = async function (match) {
+    setBusyId(match.id);
+    try {
+      const others = pending.concat(confirmed).filter(function (item) {
+        return item.id !== match.id && item.document_id === match.document_id && item.match_status !== 'Rejected';
+      });
+      await rejectMatch({
+        match,
+        document: documentsById[match.document_id],
+        actor: user,
+        otherActiveMatches: others.length > 0,
+      });
+      await load();
+      toast({ title: 'Match rejected', description: 'The document stays available for other reports.' });
+    } catch (rejectError) {
+      console.error('Match could not be rejected', rejectError);
+      toast({ title: 'Could not reject the match', description: 'Please try again.', variant: 'destructive' });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleApproveClaim = async function (claim) {
+    setBusyId('claim-' + claim.id);
+    try {
+      const doc = claimDocsById[claim.document_id] || (await base44.entities.Document.get(claim.document_id));
+      await approveClaim({
+        claim,
+        document: doc,
+        pickupPoint: pointsById[doc.pickup_point_id] || null,
+        actor: user,
+      });
+      await load();
+      toast({ title: 'Claim approved', description: 'The owner received the pick-up point and reference code.' });
+    } catch (claimError) {
+      console.error('Claim could not be approved', claimError);
+      toast({ title: 'Could not approve the claim', description: 'Please try again.', variant: 'destructive' });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleRejectClaim = async function (claim) {
+    setBusyId('claim-' + claim.id);
+    try {
+      await rejectClaim({ claim, document: claimDocsById[claim.document_id] || null, actor: user });
+      await load();
+      toast({ title: 'Claim rejected', description: 'The owner was told to bring proof of ownership.' });
+    } catch (claimError) {
+      console.error('Claim could not be rejected', claimError);
+      toast({ title: 'Could not reject the claim', description: 'Please try again.', variant: 'destructive' });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleNotify = async function (match) {
+    setBusyId(match.id);
+    try {
+      const doc = documentsById[match.document_id];
+      const report = reportsById[match.loss_report_id];
+      const point = doc ? pointsById[doc.pickup_point_id] : null;
+      await sendOwnerNotification({
+        userId: report ? report.owner_user_id : match.owner_user_id,
+        ...foundDocumentAlert({
+          documentType: doc ? doc.document_type : 'document',
+          documentNumber: doc ? doc.document_number : '',
+          pickupPointName: point ? point.name : '',
+          referenceCode: match.reference_code,
+        }),
+      });
+      await logAction({
+        action: AUDIT_ACTIONS.NOTIFICATION_SENT,
+        details: 'Collection reminder sent for match ' + match.id,
+        user,
+      });
+      toast({ title: 'Notification sent', description: 'The owner received the pickup point and reference code again.' });
+    } catch (notifyError) {
+      console.error('Notification could not be sent', notifyError);
+      toast({ title: 'Could not send the notification', description: 'Please try again.', variant: 'destructive' });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  if (loading) return <Loader label="Loading matches" />;
+
+  return (
+    <div className="space-y-8">
+      {role === 'Officer' && !user.approved ? (
+        <div className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <p className="text-sm text-amber-900">
+            Your officer account is still pending approval. Matches can only be confirmed after an administrator approves
+            your account.
+          </p>
+        </div>
+      ) : null}
+
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+
+      <section>
+        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Ownership claims to verify</h2>
+        {pendingClaims.length ? (
+          <div className="space-y-3">
+            {pendingClaims.map(function (claim) {
+              return (
+                <ClaimCard
+                  key={claim.id}
+                  claim={claim}
+                  document={claimDocsById[claim.document_id]}
+                  busy={busyId === 'claim-' + claim.id}
+                  onApprove={handleApproveClaim}
+                  onReject={handleRejectClaim}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            icon={ClipboardCheck}
+            title="No claims waiting"
+            description="Claims owners submit from their dashboard appear here for verification."
+          />
+        )}
+      </section>
+
+      <section>
+        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Possible matches to review</h2>
+        {pending.length ? (
+          <div className="space-y-3">
+            {pending.map(function (match) {
+              return (
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  document={documentsById[match.document_id]}
+                  report={reportsById[match.loss_report_id]}
+                  pickupPointName={
+                    documentsById[match.document_id] && pointsById[documentsById[match.document_id].pickup_point_id]
+                      ? pointsById[documentsById[match.document_id].pickup_point_id].name
+                      : ''
+                  }
+                  canReview
+                  busy={busyId === match.id}
+                  onConfirm={handleConfirm}
+                  onReject={handleReject}
+                  onNotify={handleNotify}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            icon={ClipboardCheck}
+            title="No pending matches"
+            description="Fuzzy matches waiting for a decision will appear here."
+          />
+        )}
+      </section>
+
+      <section>
+        <h2 className="mb-3 font-heading text-lg font-semibold text-slate-900">Confirmed matches</h2>
+        {confirmed.length ? (
+          <div className="space-y-3">
+            {confirmed.map(function (match) {
+              return (
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  document={documentsById[match.document_id]}
+                  report={reportsById[match.loss_report_id]}
+                  pickupPointName={
+                    documentsById[match.document_id] && pointsById[documentsById[match.document_id].pickup_point_id]
+                      ? pointsById[documentsById[match.document_id].pickup_point_id].name
+                      : ''
+                  }
+                  canReview
+                  busy={busyId === match.id}
+                  onConfirm={handleConfirm}
+                  onReject={handleReject}
+                  onNotify={handleNotify}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            icon={ShieldCheck}
+            title="No confirmed matches yet"
+            description="Confirmed matches are ready for the owner to collect."
+          />
+        )}
+      </section>
+    </div>
+  );
+}
+
+export default function MatchReview() {
+  return (
+    <RoleGuard allow={['Officer', 'Admin']}>
+      <PageHeader
+        title="Match review"
+        description="Confirm or reject possible matches. Exact number matches are confirmed automatically."
+      />
+      <MatchReviewContent />
+    </RoleGuard>
+  );
+}

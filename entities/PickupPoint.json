@@ -1,0 +1,56 @@
+{
+  "name": "PickupPoint",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "point_type": {
+      "type": "string",
+      "enum": [
+        "Police station",
+        "Chief's office",
+        "Other approved office"
+      ]
+    },
+    "location": {
+      "type": "string"
+    },
+    "county": {
+      "type": "string"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "opening_hours": {
+      "type": "string"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "verification_note": {
+      "type": "string"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "point_type",
+    "location",
+    "county"
+  ],
+  "rls": {
+    "read": "any signed-in user",
+    "create": "admin",
+    "update": "admin",
+    "delete": false
+  }
+}

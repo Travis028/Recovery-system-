@@ -1,0 +1,78 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "phone_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "admin"
+      ],
+      "default": "user"
+    },
+    "ldrs_role": {
+      "type": "string",
+      "enum": [
+        "Finder",
+        "Owner",
+        "Officer"
+      ]
+    },
+    "approved": {
+      "type": "boolean",
+      "default": false
+    },
+    "pickup_point_id": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "sw"
+      ],
+      "default": "en"
+    },
+    "disabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "password_hash": {
+      "type": "string"
+    },
+    "password_salt": {
+      "type": "string"
+    },
+    "failed_logins": {
+      "type": "number",
+      "default": 0
+    },
+    "locked_until": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "email",
+    "full_name"
+  ],
+  "rls": {
+    "read": "self, admin (password fields are never returned)",
+    "create": "public registration (Finder, Owner, Officer pending approval)",
+    "update": "self (name, language), admin (role, approval, station, lock)",
+    "delete": false
+  }
+}

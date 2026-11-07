@@ -1,0 +1,41 @@
+{
+  "name": "DataRequest",
+  "type": "object",
+  "properties": {
+    "owner_user_id": {
+      "type": "string"
+    },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "Access",
+        "Correction",
+        "Removal"
+      ]
+    },
+    "details": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "Completed",
+        "Declined"
+      ],
+      "default": "Open"
+    },
+    "response": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_type"
+  ],
+  "rls": {
+    "read": "requester, admin",
+    "create": "owner",
+    "update": "admin",
+    "delete": false
+  }
+}

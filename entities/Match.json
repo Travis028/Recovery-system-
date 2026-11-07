@@ -1,0 +1,48 @@
+{
+  "name": "Match",
+  "type": "object",
+  "properties": {
+    "document_id": {
+      "type": "string"
+    },
+    "loss_report_id": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "match_score": {
+      "type": "number"
+    },
+    "match_type": {
+      "type": "string",
+      "enum": [
+        "Exact",
+        "Fuzzy"
+      ]
+    },
+    "match_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Confirmed",
+        "Rejected",
+        "Returned"
+      ],
+      "default": "Pending"
+    },
+    "reference_code": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "document_id",
+    "match_type"
+  ],
+  "rls": {
+    "read": "owner of the match, officer of the station holding the document, admin",
+    "create": "approved officer, admin, server",
+    "update": "approved officer of the station, admin",
+    "delete": false
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Setting",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "value": {}
+  },
+  "required": [
+    "key"
+  ],
+  "rls": {
+    "read": "any signed-in user",
+    "create": "admin",
+    "update": "admin",
+    "delete": false
+  }
+}

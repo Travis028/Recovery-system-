@@ -1,0 +1,62 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "In-app",
+        "SMS"
+      ],
+      "default": "In-app"
+    },
+    "sender": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "sw"
+      ],
+      "default": "en"
+    },
+    "delivery_status": {
+      "type": "string",
+      "enum": [
+        "In-app",
+        "Simulated",
+        "Sent",
+        "Pending",
+        "Failed"
+      ],
+      "default": "In-app"
+    },
+    "attempts": {
+      "type": "number",
+      "default": 0
+    },
+    "read": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "message"
+  ],
+  "rls": {
+    "read": "recipient, admin",
+    "create": "approved officer, admin, server",
+    "update": "recipient (read flag only)",
+    "delete": false
+  }
+}
