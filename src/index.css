@@ -7,10 +7,6 @@
 @layer base {
     :root {
         --radius: 0.85rem;
-        --font-heading: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-        --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
-        --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-        --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
 }
 
@@ -29,10 +25,16 @@
         text-rendering: optimizeLegibility;
     }
 
-    h1,
-    h2,
+    h1 {
+        @apply text-2xl font-semibold tracking-tight;
+    }
+
+    h2 {
+        @apply text-lg font-semibold;
+    }
+
     h3 {
-        @apply font-heading;
+        @apply text-base font-semibold;
     }
 }
 

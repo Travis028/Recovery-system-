@@ -39,10 +39,17 @@ module.exports = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        heading: ['var(--font-heading)'],
-        body: ['var(--font-body)'],
+        sans: ['var(--font-sans)'],
+        heading: ['var(--font-sans)'],
+        body: ['var(--font-sans)'],
         mono: ['var(--font-mono)'],
       },
+      fontSize: Object.fromEntries(
+        ['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl'].map((size) => [
+          size,
+          [`var(--text-${size})`, { lineHeight: `var(--leading-${size})` }],
+        ]),
+      ),
     },
   },
   plugins: [require('tailwindcss-animate')],
