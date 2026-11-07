@@ -4,7 +4,7 @@ import { LogOut, Menu, X } from 'lucide-react';
 import Brand from '@/components/layout/Brand';
 import { base44 } from '@/api/base44Client';
 import useLdrsUser from '@/hooks/useLdrsUser';
-import { navForRole } from '@/lib/nav';
+import { navSectionsForRole } from '@/lib/nav';
 import { ROLE_LABELS } from '@/lib/ldrs';
 import DemoPhone from '@/components/security/DemoPhone';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,9 @@ export default function AppLayout() {
   if (loading) return <Loader label="Opening LDRS" />;
   if (!user) return <Navigate to="/login" replace />;
 
-  const items = navForRole(role);
+  const items = navSectionsForRole(role).flatMap(function (section) {
+    return section.items;
+  });
   const quickItems = items.slice(0, 4);
   const roleLabel = ROLE_LABELS[role] || 'New account';
   const displayName = user.full_name || user.email || 'LDRS user';
