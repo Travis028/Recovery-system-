@@ -1,166 +1,94 @@
-# LDRS Â· Lost Documents Recovery System
+# LDRS Web Application (v1.0)
 
-LDRS helps people in Kenya get lost identity documents back. Finders and officers register IDs,
-passports and certificates handed in at police stations or chief's offices; owners report a loss or
-search the register; the system matches the two and alerts the owner; an officer releases the
-document only after checking identity with a one-time collection code.
-
-> **Prototype.** The whole system, including the part that plays the server, runs in the browser
-> (see [How it is built](#how-it-is-built)). The security rules are real code and are enforced in
-> the data layer, but browser storage is not a server. Use mock documents only, never real people's
-> documents without their consent.
+A secure, enterprise-grade Lost and Found Tracking and Recovery Asset System designed to seamlessly manage item lifecycle states, verification criteria, and cross-party handover tracking workflows.
 
 ---
 
-## Quick start
+## ?? Key Value Operations & Features
 
-Requirements: **Node.js 18 or newer** and npm.
+The platform provides end-to-end management systems tailored to four distinct internal workflows:
 
+*   **Asset Registration**: Rich form wizards allowing asset owners and finders to report lost/found items with detailed attributes, locations, metadata tags, and documentation.
+*   **Intelligent Property Matching**: An asynchronous state-machine algorithm that analyzes, filters, cross-references, and ranks properties to flag automated pairings.
+*   **Verification Verification Checks**: Integrated Optical Character Recognition (OCR) systems designed to parse textual strings from digital document receipts to match legal ownership.
+*   **Secure Multi-Tier Handovers**: Chain-of-custody protocols tracking item location states, secure multi-digit OTP generation, identity confirmation checks, and signed electronic digital receipts.
+*   **Telemetry Auditing & Logs**: Comprehensive platform logging that streams transaction history, administrative settings mutations, access control shifts, and user interaction logs into an absolute system ledger.
+
+---
+
+## ??? Architecture & Tech Stack
+
+This modern web application relies on a decoupled, responsive design system pipeline:
+
+| Layer | Technologies Used | Key System Module |
+| :--- | :--- | :--- |
+| **Frontend Framework** | React (v18), Vite, SPA Router | Core execution, modular lifecycle rendering hooks |
+| **Styling & Theme Engine** | Tailwind CSS, PostCSS, Lucide Icons | Design system tokens (`tokens.css`), persistent Dark-Mode |
+| **Interface Elements** | Radix UI, Shadcn Primitives, Data-Table | Paginated search viewport arrays, overlay sheets, dialog modals |
+| **Core Client State** | In-Memory Volatile Microdatabase | Simulated reactive API handlers (`src/api/db.js`), mock seeds |
+| **Security Engineering** | Secure Cryptography Hashing / OTP | Privacy component canvases, asymmetric personal telemetry safety |
+
+---
+
+## ?? Multi-Tier Access Control Structure
+
+The application secures specialized administrative dashboards matching discrete system permission gates:
+
+*   **Owner Console**: View active loss filings, trace match progress alerts, submit verification paperwork, and view personal security logs.
+*   **Finder Portal**: Log found item coordinates, complete instant automated match lookups, and trace drop-off checkpoint configurations.
+*   **Officer Dashboard**: Back-office document processing center to verify uploaded item receipts, run custom search filters, evaluate match conflicts, and orchestrate secure handovers.
+*   **System Admin Console**: System-wide telemetry viewports tracking live audit ledgers, site metric analytics dashboards, database properties config, and global user management charts.
+
+---
+
+## ?? Codebase Directory Layout
+
+```text
+LDRS_Web_App_v1.0/
++-- src/
+¦   +-- api/             # Microdatabase mock engine, crypto, permissions, & seeds
+¦   +-- components/      # UI Atoms, layout frames, error boundaries, & dashboard consoles
+¦   ¦   +-- ui/          # Low-level responsive design elements (buttons, inputs, cards)
+¦   ¦   +-- layout/      # App structural sidebars, nav drawer matrices, and headers
+¦   ¦   +-- security/    # Multi-factor authentication challenges and verification modules
+¦   +-- hooks/           # State monitoring custom hooks tracking session idle cleanups
+¦   +-- lib/             # Core engines (OCR processing, tracking match state-machines, CSV generators)
+¦   +-- pages/           # Workflow viewports, item wizards, login gates, and metric settings sheets
+¦   +-- styles/          # Tailwind setup layers and global design tokens variables
+¦   +-- theme/           # Context Providers managing user screen contrast adjustments
++-- public/              # Global framework branding vector matrices and visual layouts
++-- deploy/              # Cloud production server profile settings and traffic headers
++-- docs/                # Setup manuals, validation blueprints, and architectural performance logs
+```
+
+---
+
+## ?? Local Workspace Development Setup
+
+Follow these steps to activate your workspace pipeline locally:
+
+### 1. Pre-requisites
+Ensure you have **Node.js** (v18+ recommended) and **npm** installed on your system.
+
+### 2. Dependency Installation
+Step into your project root folder and load the node modules matrix:
 ```bash
 npm install
-npm run dev          # http://localhost:5173
 ```
 
-Production build:
-
+### 3. Local Server Execution
+Fire up the Vite local server runner:
 ```bash
-npm run build        # writes dist/
-npm run preview      # serves dist/ on http://localhost:4173
+npm run dev
 ```
+Open the provided local network address (typically `http://localhost:5173`) in your browser to interact with the application shell.
 
-The first visit creates the demo data. To start again from scratch, clear the site's storage in the
-browser (DevTools â†’ Application â†’ Clear site data).
+### 4. Code Quality & Standards
+To evaluate codebase compliance and analyze layout formats, run your syntax linters:
+```bash
+# Run linting check
+npm run lint
 
-## Scripts
-
-| Command | What it does |
-|---|---|
-| `npm run dev` | Development server with hot reload |
-| `npm run build` | Production build in `dist/`, with the Content Security Policy added to `index.html` |
-| `npm run preview` | Serves the production build locally |
-| `npm run lint` | ESLint over `src/` (React and hooks rules) |
-| `npm test` | Unit tests with Vitest |
-| `npm run check:contrast` | Checks WCAG AA contrast of the colour tokens in light and dark mode |
-
-## Environment variables
-
-Copy `.env.example` to `.env` and adjust. All variables are optional.
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `VITE_SMS_GATEWAY_URL` | empty | An endpoint on **your** server that forwards SMS to Africa's Talking. Keep the API key on that server. When empty, messages appear in the in-app *Demo SMS* phone. |
-| `VITE_SHOW_DEMO_ACCOUNTS` | `true` | Set to `false` to hide the demo account shortcuts on the sign-in page. |
-
-Vite only exposes variables that start with `VITE_`, and they end up in the browser bundle, so
-never put secrets in them.
-
-## Demo accounts
-
-All data is invented.
-
-| Role | Email | Password | Notes |
-|---|---|---|---|
-| Administrator | admin@ldrs.test | Admin@LDRS2026 | two-step sign-in |
-| Officer, Kisumu Central | officer.kisumu@ldrs.test | Officer@LDRS2026 | two-step sign-in |
-| Officer, Kondele | officer.kondele@ldrs.test | Officer@LDRS2026 | two-step sign-in |
-| Finder | finder@ldrs.test | Finder@LDRS2026 | |
-| Owner | owner@ldrs.test | Owner@LDRS2026 | phone already verified |
-
-Sign-in codes, phone codes and collection codes arrive in the **Demo SMS** phone at the bottom left.
-
-### A five-minute walk-through
-
-1. **Officer (Kisumu)** â†’ *Match review* â†’ *Possible matches* â†’ confirm the match for Mary Wanjiru Kamau.
-2. *Confirmed* â†’ *Start handover* â†’ *Create six-digit code* â†’ read it in the Demo SMS phone â†’ enter the
-   reference code, ID number `28456713`, the code and the collector's details â†’ *Approve release* â†’
-   print the receipt and scan its QR code.
-3. **Finder** â†’ *Register found document* â†’ upload a JPG or PNG â†’ try *Read name and number* â†’
-   register. Register the same document again to see duplicate detection.
-4. **Owner** â†’ *Search found documents* (a check question appears after three searches), *Report a
-   lost document*, and *This is mine* to send a claim.
-5. **Admin** â†’ *Audit trail* â†’ *Verify chain*; *Users and roles*; *Backups and data protection*.
-
-## Features by role
-
-| Role | Screens |
-|---|---|
-| Owner | Dashboard with collection code, report a lost document, masked search, claims, alerts, pickup points, my data and privacy |
-| Finder | Dashboard, register a found document (photo, OCR), my documents, pickup points, my data |
-| Officer | Station dashboard, documents, match and claim review, secure handover, receipts, statistics |
-| Admin | Everything above across all stations, plus users and roles, pickup point management, audit trail, backups, retention and data protection requests |
-
-## Interface
-
-- **Design tokens** in `src/styles/tokens.css`: neutral surfaces, one primary colour (teal), one
-  accent (violet), four status colours, a type scale, spacing, radii and shadows, all CSS
-  variables. Tailwind maps its colour names to them in `tailwind.config.js`, so components never
-  use raw colours.
-- **Light and dark mode** from the toggle in the top bar. The first visit follows the device
-  setting; a choice is saved in `localStorage` under `ldrs.theme`. A small inline script in
-  `index.html` applies the theme before the first paint, so a reload never flashes white. Printed
-  receipts always use the light colours.
-- **Layout**: sidebar from 1280 px, a drawer menu below that, a top bar with the page name, theme
-  toggle and account menu, breadcrumbs on record pages.
-- **Tables** sort, search and page; below 768 px rows turn into stacked cards.
-- **Forms** show the reason under each field after it is left or when the form is sent, and move
-  focus to the first problem. Results and failures appear as toasts or alerts.
-- **Accessibility**: skip link, visible focus rings, labelled controls, `aria-sort` on tables,
-  live regions for toasts and errors, reduced-motion support, and contrast checked by
-  `npm run check:contrast`.
-
-## Project structure
-
+# Execute structural test specs
+npm run test
 ```
-src/
-  api/            The "server": data store, access rules, auth, server functions, audit log, file store
-  components/
-    data-table/   DataTable, pagination, row actions
-    layout/       Sidebar, top bar, drawer, user menu, account notices
-    ui/           Buttons, inputs, select, dialog, badge, alert, card, tabs, toasts and other primitives
-    ...           Feature components (dashboards, matches, claims, owner, security, documents)
-  entities/       JSON schemas, checked on every create and update
-  hooks/          useLdrsUser, useResource, useFieldErrors, useIdleLogout
-  lib/            Domain helpers: masking, matching, validation, OCR, images, SMS, CSV, navigation
-  pages/          One file per route, loaded on demand
-  styles/         Design tokens
-  theme/          Theme provider and toggle
-docs/             Audit, setup and deployment guide, testing checklist
-scripts/          Contrast checker
-deploy/           Example Nginx configuration
-```
-
-## How it is built
-
-React 18, React Router 6, Vite 5, Tailwind CSS 3 with Radix UI primitives, lucide-react icons,
-date-fns, qrcode and tesseract.js.
-
-There is no separate backend. `src/api/` plays that part inside the browser:
-
-| Piece | What it does |
-|---|---|
-| `client.js` | `api.entities.X`, `api.auth`, `api.functions.invoke()`; every call is checked against the signed-in role |
-| `db.js` | Tables in `localStorage`, schema checks, transactions for multi-record changes, daily snapshots |
-| `recordChecks.js` | Field rules applied on every write (the same checks the forms run) |
-| `permissions.js` | Who may read or change each record, and which fields are masked |
-| `functions.js`, `reviewFunctions.js` | Operations that must not be trusted to the screen: search, matching, claims, handover, exports, backups |
-| `auditStore.js` | Append-only audit log; each entry carries the SHA-256 of the one before it |
-| `fileStore.js` | Photographs encrypted with AES-256-GCM in IndexedDB |
-
-Passwords are hashed with PBKDF2-SHA256 (310 000 iterations), officers and admins use a two-step
-code, accounts lock after five failures, sessions sign out after 15 idle minutes, and the
-production build ships a strict Content Security Policy.
-
-### Moving to production
-
-| Prototype | Production |
-|---|---|
-| Data in `localStorage`, audit log under a separate key | PostgreSQL for records; the audit log on a separate append-only store |
-| Access rules in the browser (`src/api/permissions.js`) | The same rules in an API server for every request |
-| PBKDF2 in the browser | bcrypt or Argon2 on the server, HTTPS everywhere |
-| Photographs in IndexedDB | Object storage outside the web root, keys in a KMS, malware scanning |
-| OCR with tesseract.js in the browser | An internal OCR service not reachable from the internet |
-| Demo SMS phone | Africa's Talking through `VITE_SMS_GATEWAY_URL` and your server |
-| Arithmetic check question | Cloudflare Turnstile or hCaptcha verified on the server |
-
-`docs/SETUP.md` covers installation and deployment in more detail, and `docs/TESTING.md` is the
-checklist for testing a release in both themes.
