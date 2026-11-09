@@ -1,0 +1,103 @@
+{
+  "name": "LossReport",
+  "type": "object",
+  "properties": {
+    "owner_user_id": {
+      "type": "string"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "National ID",
+        "Passport",
+        "Driver's License",
+        "Birth Certificate",
+        "Academic Certificate",
+        "Student ID",
+        "NHIF Health Card",
+        "NSSF Card",
+        "Employment ID",
+        "Other"
+      ]
+    },
+    "owner_name": {
+      "type": "string"
+    },
+    "document_number": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "consent_given": {
+      "type": "boolean",
+      "default": false
+    },
+    "date_lost": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "Matched",
+        "Closed"
+      ],
+      "default": "Open"
+    }
+  },
+  "required": [
+    "document_type",
+    "owner_name",
+    "phone"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "data.approved": true
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

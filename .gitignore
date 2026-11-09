@@ -1,0 +1,31 @@
+node_modules/
+dist/
+.env
+server/data/
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*service-account*.json
+
+# Dependencies
+node_modules/
+
+# Database backups
+*.sql
+*.dump
+*.backup
+
+# Logs
+*.log
+*.tmp
+
+# Sensitive documents
+*.pdf
+*.docx
+*.xlsx

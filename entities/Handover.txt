@@ -1,0 +1,81 @@
+{
+  "name": "Handover",
+  "type": "object",
+  "properties": {
+    "document_id": {
+      "type": "string"
+    },
+    "match_id": {
+      "type": "string"
+    },
+    "officer_user_id": {
+      "type": "string"
+    },
+    "released_to": {
+      "type": "string"
+    },
+    "claimant_id_type": {
+      "type": "string",
+      "enum": [
+        "National ID",
+        "Passport",
+        "Driver's License",
+        "Employment ID",
+        "Other"
+      ]
+    },
+    "claimant_id_number": {
+      "type": "string"
+    },
+    "verification_method": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "document_id",
+    "match_id",
+    "released_to"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "data.approved": true
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

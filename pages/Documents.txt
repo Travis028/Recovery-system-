@@ -1,0 +1,177 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
+import RoleGuard from '@/components/RoleGuard';
+import PageHeader from '@/components/PageHeader';
+import EmptyState from '@/components/EmptyState';
+import Loader from '@/components/Loader';
+import DocumentRow from '@/components/documents/DocumentRow';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import useLdrsUser from '@/hooks/useLdrsUser';
+import { DOCUMENT_STATUSES, nameSimilarity, normalizeId } from '@/lib/ldrs';
+import { FolderOpen, FilePlus, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+function DocumentsContent() {
+  const { user, role } = useLdrsUser();
+  const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState([]);
+  const [points, setPoints] = useState([]);
+  const [status, setStatus] = useState('All');
+  const [query, setQuery] = useState('');
+
+  useEffect(
+    function () {
+      let active = true;
+      const load = async function () {
+        if (!user) return;
+        const filter = {};
+        if (role === 'Finder') filter.finder_user_id = user.id;
+        if (role === 'Officer' && user.pickup_point_id) filter.pickup_point_id = user.pickup_point_id;
+
+        const page = await base44.entities.Document.filter(filter, { sort: '-created_date', limit: 100 });
+        const pointList = await base44.entities.PickupPoint.list();
+
+        if (!active) return;
+        setDocuments(page.items || []);
+        setPoints(Array.isArray(pointList) ? pointList : []);
+        setLoading(false);
+      };
+      load();
+      return function () {
+        active = false;
+      };
+    },
+    [role, user ? user.id : null, user ? user.pickup_point_id : null],
+  );
+
+  if (!user) return <Loader label="Loading documents" />;
+
+  const pointName = function (id) {
+    const point = points.find(function (item) {
+      return item.id === id;
+    });
+    return point ? point.name : '';
+  };
+
+  const visible = documents.filter(function (doc) {
+    if (status !== 'All' && doc.status !== status) return false;
+    const term = String(query || '').trim();
+    if (!term) return true;
+    const needle = normalizeId(term);
+    return (
+      (needle && normalizeId(doc.document_number).includes(needle)) ||
+      nameSimilarity(doc.owner_name, term) >= 0.6 ||
+      String(doc.found_location || '').toLowerCase().includes(term.toLowerCase())
+    );
+  });
+
+  if (loading) return <Loader label="Loading documents" />;
+
+  const maskList = role === 'Owner';
+
+  const emptyTitle =
+    role === 'Finder'
+      ? 'You have not reported any documents yet'
+      : role === 'Officer'
+        ? 'No documents are currently held at this station'
+        : 'No documents recorded yet';
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="flex flex-wrap gap-2">
+          {['All'].concat(DOCUMENT_STATUSES).map(function (item) {
+            const active = status === item;
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={function () {
+                  setStatus(item);
+                }}
+                className={cn(
+                  'rounded-full px-3.5 py-1.5 text-xs font-semibold transition',
+                  active ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                )}
+              >
+                {item === 'All' ? 'All documents' : item}
+              </button>
+            );
+          })}
+        </div>
+        <div className="relative mt-4">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            className="pl-9"
+            value={query}
+            placeholder="Search by name, document number or place found"
+            onChange={function (event) {
+              setQuery(event.target.value);
+            }}
+          />
+        </div>
+      </div>
+
+      {visible.length ? (
+        <div className="space-y-3">
+          {visible.map(function (doc) {
+            return (
+              <DocumentRow key={doc.id} document={doc} pickupPointName={pointName(doc.pickup_point_id)} mask={maskList} />
+            );
+          })}
+        </div>
+      ) : documents.length ? (
+        <EmptyState
+          icon={FolderOpen}
+          title="No documents match this filter"
+          description="Try another status or clear the search box."
+        />
+      ) : (
+        <EmptyState
+          icon={FolderOpen}
+          title={emptyTitle}
+          description={
+            role === 'Finder'
+              ? 'Documents you hand in at a pickup point will be listed here.'
+              : 'Documents registered at this pickup point will be listed here.'
+          }
+          action={
+            role === 'Finder' || role === 'Officer' ? (
+              <Button className="gap-2 rounded-xl bg-blue-900 hover:bg-blue-950" asChild>
+                <Link to="/report-found">
+                  <FilePlus className="h-4 w-4" />
+                  Register a found document
+                </Link>
+              </Button>
+            ) : null
+          }
+        />
+      )}
+
+      {maskList && visible.length ? (
+        <p className="text-xs text-slate-500">
+          Names and numbers are partly hidden in this list. Open a document to see what is available to you.
+        </p>
+      ) : null}
+      {!maskList && documents.length ? (
+        <p className="text-xs text-slate-400">
+          Document numbers are shown in full for officers and administrators only. Keep them confidential.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export default function Documents() {
+  return (
+    <RoleGuard allow={['Finder', 'Officer', 'Admin']}>
+      <PageHeader
+        title="Documents"
+        description="Documents handed in at pickup points, with their current status."
+      />
+      <DocumentsContent />
+    </RoleGuard>
+  );
+}

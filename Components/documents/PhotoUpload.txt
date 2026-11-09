@@ -1,0 +1,96 @@
+import { useRef, useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import PrivateImage from '@/components/PrivateImage';
+import { Camera, Loader2, RefreshCw } from 'lucide-react';
+
+/**
+ * Takes or uploads the photograph of the document.
+ * Photographs stay in private storage (stored privately) and are only opened for the
+ * people allowed to see the record.
+ */
+export default function PhotoUpload({ fileUri, onChange, helper }) {
+  const inputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleFile = async function (event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    if (!file.type || file.type.indexOf('image/') !== 0) {
+      setError('Only photographs of the document can be uploaded (JPG, PNG or HEIC).');
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('That photograph is too large. Take a smaller picture below 5 MB.');
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
+    setUploading(true);
+    setError('');
+    try {
+      const uploaded = await base44.integrations.Core.UploadPrivateFile({ file });
+      onChange(uploaded.file_uri);
+    } catch (uploadError) {
+      console.error('Photograph upload failed', uploadError);
+      setError('The photograph could not be uploaded. Please try again.');
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFile}
+      />
+
+      {fileUri ? (
+        <div className="space-y-3">
+          <PrivateImage fileUri={fileUri} className="h-56 w-full rounded-2xl border border-slate-200 bg-white" />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2 rounded-xl sm:w-auto"
+            onClick={function () {
+              if (inputRef.current) inputRef.current.click();
+            }}
+          >
+            <RefreshCw className="h-4 w-4" />
+            Replace photograph
+          </Button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={function () {
+            if (inputRef.current) inputRef.current.click();
+          }}
+          disabled={uploading}
+          className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50/50 px-6 py-12 text-center transition hover:border-violet-400 hover:bg-violet-50/50 disabled:opacity-60"
+        >
+          {uploading ? (
+            <Loader2 className="h-7 w-7 animate-spin text-blue-800" />
+          ) : (
+            <Camera className="h-7 w-7 text-blue-800" />
+          )}
+          <span className="font-heading text-sm font-semibold text-slate-800">
+            {uploading ? 'Uploading photograph...' : 'Take or upload a photograph'}
+          </span>
+          <span className="text-xs text-slate-500">
+            {helper || 'Photograph the document clearly, showing the name and number (stored privately).'}
+          </span>
+        </button>
+      )}
+
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+    </div>
+  );
+}
