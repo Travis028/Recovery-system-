@@ -31,3 +31,5 @@ backend/.private-photo-key
 backend/.private-document-photos/
 .DS_Store
 Thumbs.db
+
+desktop.ini
