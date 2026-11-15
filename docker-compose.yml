@@ -1,0 +1,26 @@
+# LDRS v6 — PostgreSQL 16.
+# The project name below is pinned on purpose: it makes Docker reuse your EXISTING data volume
+# "ldrs_project_folder_ver5_ldrs_pgdata" and container "ldrs_project_folder_ver5-db-1",
+# whatever this folder is called. Do not change it, or Docker will create a new, empty database.
+name: ldrs_project_folder_ver5
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ldrs_local
+      POSTGRES_USER: ldrs_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - ldrs_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ldrs_app -d ldrs_local"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  ldrs_pgdata:
