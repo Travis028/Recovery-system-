@@ -1,0 +1,181 @@
+/*
+ * Design tokens. Colours are stored as HSL channels so Tailwind can add opacity
+ * (for example bg-primary/10). Components use the Tailwind names mapped in
+ * tailwind.config.js, never raw colour values.
+ */
+:root {
+  /* Surfaces and text */
+  --background: 210 20% 98%;
+  --foreground: 215 28% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 28% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 28% 14%;
+  --muted: 210 18% 95%;
+  --muted-foreground: 215 14% 38%;
+  --border: 214 18% 88%;
+  --border-strong: 214 14% 74%;
+  --input: 215 13% 55%;
+  --ring: 191 82% 34%;
+
+  /* Brand */
+  --primary: 191 82% 27%;
+  --primary-hover: 191 84% 22%;
+  --primary-foreground: 0 0% 100%;
+  --primary-subtle: 190 60% 94%;
+  --primary-subtle-foreground: 191 80% 22%;
+
+  --accent: 258 50% 48%;
+  --accent-foreground: 0 0% 100%;
+  --accent-subtle: 258 60% 96%;
+  --accent-subtle-foreground: 258 50% 36%;
+
+  /* Status */
+  --success: 152 62% 30%;
+  --success-foreground: 0 0% 100%;
+  --success-subtle: 145 50% 94%;
+  --success-subtle-foreground: 152 65% 22%;
+  --success-border: 148 40% 78%;
+
+  --warning: 32 90% 38%;
+  --warning-foreground: 0 0% 100%;
+  --warning-subtle: 44 90% 93%;
+  --warning-subtle-foreground: 30 85% 26%;
+  --warning-border: 40 75% 70%;
+
+  --danger: 0 68% 46%;
+  --danger-foreground: 0 0% 100%;
+  --danger-subtle: 0 80% 96%;
+  --danger-subtle-foreground: 0 65% 34%;
+  --danger-border: 0 70% 84%;
+
+  --info: 214 75% 42%;
+  --info-foreground: 0 0% 100%;
+  --info-subtle: 214 85% 95%;
+  --info-subtle-foreground: 214 70% 32%;
+  --info-border: 214 70% 84%;
+
+  /* Charts: a two-series pair that stays apart for colour-blind readers */
+  --chart-1: 199 98% 39%;
+  --chart-2: 32 95% 44%;
+  --chart-grid: 214 18% 91%;
+}
+
+/* Typography: one family (Inter, self-hosted) with a fixed scale. */
+:root {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+
+  --leading-xs: 1rem;
+  --leading-sm: 1.25rem;
+  --leading-base: 1.5rem;
+  --leading-lg: 1.75rem;
+  --leading-xl: 1.75rem;
+  --leading-2xl: 2rem;
+  --leading-3xl: 2.25rem;
+}
+
+/* Layout, shape and depth */
+:root {
+  --space-page-x: 1rem;
+  --space-page-y: 1.5rem;
+  --space-section: 1.5rem;
+  --space-card: 1.25rem;
+  --sidebar-width: 16rem;
+  --topbar-height: 3.5rem;
+  --content-max: 76rem;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  --shadow-sm: 0 1px 2px 0 hsl(215 28% 14% / 0.06);
+  --shadow-md: 0 4px 12px -2px hsl(215 28% 14% / 0.08), 0 2px 4px -2px hsl(215 28% 14% / 0.05);
+  --shadow-lg: 0 16px 32px -8px hsl(215 28% 14% / 0.16), 0 4px 8px -4px hsl(215 28% 14% / 0.08);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --space-page-x: 1.5rem;
+    --space-card: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --space-page-x: 2rem;
+    --space-page-y: 2rem;
+  }
+}
+
+/* Dark theme: same names, values tuned for dark surfaces (WCAG AA for body and muted text). Screen only: printed pages always use the light values. */
+@media screen {
+  .dark {
+    color-scheme: dark;
+
+    --background: 216 28% 8%;
+    --foreground: 210 20% 94%;
+    --card: 216 24% 12%;
+    --card-foreground: 210 20% 94%;
+    --popover: 216 24% 14%;
+    --popover-foreground: 210 20% 94%;
+    --muted: 216 20% 17%;
+    --muted-foreground: 214 14% 68%;
+    --border: 216 16% 22%;
+    --border-strong: 216 14% 34%;
+    --input: 216 12% 44%;
+    --ring: 188 70% 55%;
+
+    --primary: 188 70% 48%;
+    --primary-hover: 188 72% 56%;
+    --primary-foreground: 216 40% 8%;
+    --primary-subtle: 190 50% 15%;
+    --primary-subtle-foreground: 188 70% 74%;
+
+    --accent: 258 70% 72%;
+    --accent-foreground: 258 40% 12%;
+    --accent-subtle: 258 30% 20%;
+    --accent-subtle-foreground: 258 80% 84%;
+
+    --success: 150 55% 45%;
+    --success-foreground: 150 60% 8%;
+    --success-subtle: 150 40% 13%;
+    --success-subtle-foreground: 145 55% 72%;
+    --success-border: 150 35% 26%;
+
+    --warning: 38 90% 55%;
+    --warning-foreground: 36 70% 10%;
+    --warning-subtle: 36 50% 13%;
+    --warning-subtle-foreground: 40 90% 72%;
+    --warning-border: 36 45% 28%;
+
+    --danger: 0 75% 62%;
+    --danger-foreground: 0 60% 10%;
+    --danger-subtle: 0 45% 15%;
+    --danger-subtle-foreground: 0 85% 80%;
+    --danger-border: 0 40% 32%;
+
+    --info: 214 85% 66%;
+    --info-foreground: 214 60% 10%;
+    --info-subtle: 214 45% 16%;
+    --info-subtle-foreground: 214 90% 80%;
+    --info-border: 214 40% 32%;
+
+    --chart-1: 199 85% 45%;
+    --chart-2: 30 85% 45%;
+    --chart-grid: 216 16% 20%;
+
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.4);
+    --shadow-md: 0 4px 12px -2px hsl(0 0% 0% / 0.5), 0 2px 4px -2px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 16px 32px -8px hsl(0 0% 0% / 0.6), 0 4px 8px -4px hsl(0 0% 0% / 0.4);
+  }
+}
