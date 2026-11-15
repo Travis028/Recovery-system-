@@ -1,0 +1,33 @@
+# Secrets and private data — never commit
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+# Frontend mode files hold no secrets (they only switch PostgreSQL / demo mode)
+!frontend/.env.server
+!frontend/.env.demo
+backend/.private-photo-key
+backend/.private-collection-key
+backend/.private-document-photos/
+
+# Dependencies, builds, backups, logs
+**/node_modules/
+**/dist/
+backups/
+*.dump
+*.backup
+*.log
+
+node_modules/
+dist/
+build/
+.env
+backend/.env
+frontend/.env.server
+backend/.private-collection-key
+backend/.private-photo-key
+backend/.private-document-photos/
+.DS_Store
+Thumbs.db
