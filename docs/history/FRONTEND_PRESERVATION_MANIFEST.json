@@ -1,0 +1,12 @@
+{
+  "preserved_count": 142,
+  "original_count": 143,
+  "modified_original_files": [
+    "vite.config.mjs"
+  ],
+  "new_frontend_files": [
+    "src/api/backendTransport.js"
+  ],
+  "removed_original_files": [],
+  "purpose": "No original LDRS screen, component, hook, role, or browser-side API removed or changed"
+}

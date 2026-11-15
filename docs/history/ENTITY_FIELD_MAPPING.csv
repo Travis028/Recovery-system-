@@ -1,0 +1,13 @@
+Version6Entity,Version6Fields,ProposedV6SchemaTable,V5PilotTableWithSimilarName,CompatibilityNote
+AuditLog,"user_id, action, details, actor_role, prev_hash, hash, seq",ldrs_v6.audit_log,public.audit_log,V5 has same table name but DIFFERENT contract; not interchangeable
+Claim,"document_id, document_type, owner_user_id, owner_name, phone, document_number, note, status, match_id, reference_code",ldrs_v6.claims,,Not implemented in V5 pilot
+DataRequest,"owner_user_id, request_type, details, status, response",ldrs_v6.data_requests,,Not implemented in V5 pilot
+Document,"finder_user_id, document_type, owner_name, document_number, found_location, date_found, pickup_point_id, image_url, ocr_name_confidence, ocr_number_confidence, status, returned_at, image_sha256, image_phash, ocr_used, ocr_name_accepted, ocr_number_accepted, duplicate_flag, duplicate_reasons, duplicate_of_id",ldrs_v6.documents,public.documents,V5 has same table name but DIFFERENT contract; not interchangeable
+Handover,"document_id, match_id, officer_user_id, released_to, claimant_id_type, claimant_id_number, verification_method, notes, pickup_point_id, integrity_hash",ldrs_v6.handovers,,Not implemented in V5 pilot
+LossReport,"owner_user_id, document_type, owner_name, document_number, phone, consent_given, date_lost, status, phone_verified",ldrs_v6.loss_reports,public.loss_reports,V5 has same table name but DIFFERENT contract; not interchangeable
+Match,"document_id, loss_report_id, owner_user_id, match_score, match_type, match_status, reference_code",ldrs_v6.matches,public.matches,V5 has same table name but DIFFERENT contract; not interchangeable
+Notification,"user_id, phone, message, channel, sender, language, delivery_status, attempts, read",ldrs_v6.notifications,,Not implemented in V5 pilot
+OtpCode,"match_id, owner_user_id, otp_code, expires_at, used, attempts, otp_hash, locked",ldrs_v6.otp_codes,,Not implemented in V5 pilot; hash OTP on server (do not store plaintext otp_code)
+PickupPoint,"name, point_type, location, county, contact_phone, opening_hours, verified, verification_note, verified_at, active",ldrs_v6.pickup_points,,Not implemented in V5 pilot
+Setting,"key, value",ldrs_v6.settings,,Not implemented in V5 pilot
+User,"email, full_name, phone, phone_verified, role, ldrs_role, approved, pickup_point_id, language, disabled, password_hash, password_salt, failed_logins, locked_until",ldrs_v6.users,public.users,V5 has same table name but DIFFERENT contract; not interchangeable
