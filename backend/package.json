@@ -1,0 +1,21 @@
+{
+  "name": "ldrs-v6-backend",
+  "version": "6.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check records.mjs && node --check handover.mjs && node --check auditChain.mjs && node --check security.mjs && node --check scripts/seed-dev.mjs && node --check locations.mjs && node --check scripts/migrate.mjs",
+    "check:db": "node scripts/check-db.mjs",
+    "smoke": "node scripts/smoke-check.mjs",
+    "test": "node --test test/*.test.mjs",
+    "seed:dev": "node scripts/seed-dev.mjs",
+    "migrate": "node scripts/migrate.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}
