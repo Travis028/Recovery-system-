@@ -62,6 +62,7 @@ export default function Login() {
   const destination = typeof requested === 'string' && requested.charAt(0) === '/' && requested.indexOf('//') !== 0 ? requested : '/dashboard';
   const [mode, setMode] = useState('login'); // login | two_step | register | forgot | reset
   const [signedIn, setSignedIn] = useState(false);
+  const [backendOffline, setBackendOffline] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState(location.state && location.state.expired ? 'Your session has ended. Sign in again to continue.' : '');
@@ -98,11 +99,22 @@ export default function Login() {
       .then(function () {
         setSignedIn(true);
       })
-      .catch(function () {});
+      .catch(function (err) {
+        if (serverAuthEnabled && err && (err.status === 503 || String(err.message || '').includes('Cannot reach the LDRS v6 backend'))) {
+          setBackendOffline(true);
+        }
+      });
     api.functions
       .invoke('listPublicPickupPoints')
-      .then(setPoints)
-      .catch(function () {});
+      .then(function (pts) {
+        setPoints(pts);
+        setBackendOffline(false);
+      })
+      .catch(function (err) {
+        if (serverAuthEnabled && err && (err.status === 503 || String(err.message || '').includes('Cannot reach the LDRS v6 backend'))) {
+          setBackendOffline(true);
+        }
+      });
   }, []);
 
   if (signedIn) return <Navigate to={destination} replace />;
@@ -204,6 +216,11 @@ export default function Login() {
 
   const notices = (
     <>
+      {backendOffline ? (
+        <Alert tone="warning" title="Backend server offline">
+          Cannot connect to the LDRS backend on port 4001. To use PostgreSQL mode, start the backend in a separate terminal with <code className="font-mono text-xs">cd backend &amp;&amp; npm start</code>. For browser demo mode without Docker, run <code className="font-mono text-xs">npm run dev:demo</code>.
+        </Alert>
+      ) : null}
       {info ? <Alert tone="info">{info}</Alert> : null}
       {error ? <Alert tone="danger">{error}</Alert> : null}
     </>

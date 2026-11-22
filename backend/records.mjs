@@ -144,7 +144,11 @@ async function editEntity(ctx,name,id,changes) {
   const original=await getEntity(ctx,name,id);
   let allowed=[];
   if (name==='User') { insist(role==='Admin' || user.id===id,'You cannot update this account.',403); allowed=role==='Admin'?['approved','disabled','pickup_point_id','phone_verified','failed_logins','locked_until','full_name','language']:['full_name','language']; }
-  if (name==='Document') { insist(role==='Admin' || (approvedOfficer(user)&&original.pickup_point_id===user.pickup_point_id),'Station approval required.',403); allowed=['duplicate_flag','duplicate_reasons']; } // Status changes require audited workflows.
+  if (name==='Document') {
+    insist(role==='Admin' || (approvedOfficer(user)&&original.pickup_point_id===user.pickup_point_id),'Station approval required.',403);
+    allowed=['duplicate_flag','duplicate_reasons','status'];
+    if (changes.status) insist(['Found','Unclaimed','Archived'].includes(changes.status), 'Invalid status transition.');
+  }
   if (name==='Match') { abort(403,'Match decisions must use the audited review workflow.'); }
   if (name==='Claim') { abort(403,'Claim decisions must use the audited review workflow.'); }
   if (name==='Notification') { insist(role==='Admin' || original.user_id===user.id,'Not your notification.',403); allowed=role==='Admin'?['read','delivery_status']:['read']; }

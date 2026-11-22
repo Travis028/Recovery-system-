@@ -79,7 +79,15 @@ export default defineConfig({
     proxy: {
       '/api/v6': {
         target: 'http://127.0.0.1:4001',
-        changeOrigin: false
+        changeOrigin: false,
+        configure: (proxy) => {
+          proxy.on('error', (err, req, res) => {
+            if (res && !res.headersSent && typeof res.writeHead === 'function') {
+              res.writeHead(503, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Cannot reach the LDRS v6 backend (port 4001). Is it running?' }));
+            }
+          });
+        }
       }
     }
   },
@@ -88,7 +96,21 @@ export default defineConfig({
   preview: {
     port: 5175,
     strictPort: true,
-    host: '127.0.0.1'
+    host: '127.0.0.1',
+    proxy: {
+      '/api/v6': {
+        target: 'http://127.0.0.1:4001',
+        changeOrigin: false,
+        configure: (proxy) => {
+          proxy.on('error', (err, req, res) => {
+            if (res && !res.headersSent && typeof res.writeHead === 'function') {
+              res.writeHead(503, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Cannot reach the LDRS v6 backend (port 4001). Is it running?' }));
+            }
+          });
+        }
+      }
+    }
   },
 
   build: {

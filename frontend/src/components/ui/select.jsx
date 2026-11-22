@@ -5,7 +5,9 @@ import { cn } from '@/lib/utils';
 import { fieldClasses } from '@/components/ui/input';
 import { useFieldProps } from '@/components/ui/form-field';
 
-const Select = SelectPrimitive.Root;
+function Select({ value, ...props }) {
+  return <SelectPrimitive.Root value={value || undefined} {...props} />;
+}
 const SelectGroup = SelectPrimitive.Group;
 const SelectValue = SelectPrimitive.Value;
 

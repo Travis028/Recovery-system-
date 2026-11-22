@@ -45,7 +45,7 @@ export function reloadLdrsUser() {
   pending = api.auth
     .me()
     .catch(function (error) {
-      if (error && error.status !== 401) console.error('Could not load the signed-in user', error);
+      if (error && error.status !== 401 && error.status !== 503) console.error('Could not load the signed-in user', error);
       return null;
     })
     .then(function (me) {

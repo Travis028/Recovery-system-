@@ -1,0 +1,19 @@
+{
+  "name": "ldrs-v6",
+  "version": "6.0.0",
+  "private": true,
+  "description": "LDRS: Lost Documents Recovery System (v6)",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "dev:demo": "npm --prefix frontend run dev:demo",
+    "build": "npm --prefix frontend run build",
+    "build:demo": "npm --prefix frontend run build:demo",
+    "preview": "npm --prefix frontend run preview",
+    "lint": "npm --prefix frontend run lint",
+    "test": "npm --prefix backend test && npm --prefix frontend test",
+    "test:backend": "npm --prefix backend test",
+    "test:frontend": "npm --prefix frontend test",
+    "start": "npm --prefix backend start",
+    "check": "npm --prefix backend run check"
+  }
+}
