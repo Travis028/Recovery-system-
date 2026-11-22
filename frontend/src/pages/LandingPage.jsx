@@ -46,7 +46,7 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <InstallAppButton variant="outline" size="sm" className="hidden sm:inline-flex text-xs h-8" />
+            <InstallAppButton variant="outline" size="sm" className="inline-flex text-xs h-8" />
             <ThemeToggle />
             {user ? (
               <Button asChild>
@@ -100,6 +100,7 @@ export default function LandingPage() {
                   Search Found Register
                 </Link>
               </Button>
+              <InstallAppButton size="lg" variant="outline" className="h-11 px-6 shadow-sm" />
             </div>
 
             {/* Quick trust metrics */}

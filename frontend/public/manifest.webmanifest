@@ -1,6 +1,6 @@
 {
-  "name": "Lost Documents Recovery System",
-  "short_name": "LDRS Kenya",
+  "name": "Recovery",
+  "short_name": "Recovery",
   "description": "National Lost and Found Identity Documents Recovery Network - Republic of Kenya",
   "start_url": "/",
   "scope": "/",

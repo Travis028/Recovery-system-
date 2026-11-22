@@ -8,7 +8,7 @@ import InstallAppModal from '@/components/pwa/InstallAppModal';
  * Clean floating banner for mobile browsers prompting installation.
  */
 export default function InstallAppBanner() {
-  const { isInstalled, isIos, showIosGuide, setShowIosGuide, promptInstall } =
+  const { isInstalled, isIos, isAndroid, hasNativePrompt, showGuide, setShowGuide, promptInstall } =
     usePwaInstall();
   const [dismissed, setDismissed] = useState(() => {
     try {
@@ -31,14 +31,11 @@ export default function InstallAppBanner() {
   };
 
   const handleAction = async () => {
-    if (isIos) {
-      setModalOpen(true);
-      return;
+    if (hasNativePrompt && !isIos) {
+      const outcome = await promptInstall();
+      if (outcome === 'accepted') return;
     }
-    const result = await promptInstall();
-    if (result === 'not_available' || result === 'ios_guide') {
-      setModalOpen(true);
-    }
+    setModalOpen(true);
   };
 
   return (
@@ -54,7 +51,7 @@ export default function InstallAppBanner() {
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-foreground">
-              Install LDRS on your phone
+              Install Recovery on your phone
             </p>
             <p className="truncate text-xs text-muted-foreground">
               Fast, offline-ready document recovery
@@ -84,12 +81,14 @@ export default function InstallAppBanner() {
       </aside>
 
       <InstallAppModal
-        open={modalOpen || showIosGuide}
+        open={modalOpen || showGuide}
         onOpenChange={(open) => {
           setModalOpen(open);
-          setShowIosGuide(open);
+          setShowGuide(open);
         }}
         isIos={isIos}
+        isAndroid={isAndroid}
+        hasNativePrompt={hasNativePrompt}
         onInstall={promptInstall}
       />
     </>
@@ -100,20 +99,18 @@ export default function InstallAppBanner() {
  * Reusable inline "Install App" button for Navbars, Headers, or Menus.
  */
 export function InstallAppButton({ variant = 'outline', size = 'sm', className = '' }) {
-  const { isInstalled, isIos, showIosGuide, setShowIosGuide, promptInstall } = usePwaInstall();
+  const { isInstalled, isIos, isAndroid, hasNativePrompt, showGuide, setShowGuide, promptInstall } =
+    usePwaInstall();
   const [modalOpen, setModalOpen] = useState(false);
 
   if (isInstalled) return null;
 
   const handleClick = async () => {
-    if (isIos) {
-      setModalOpen(true);
-      return;
+    if (hasNativePrompt && !isIos) {
+      const outcome = await promptInstall();
+      if (outcome === 'accepted') return;
     }
-    const result = await promptInstall();
-    if (result === 'not_available' || result === 'ios_guide') {
-      setModalOpen(true);
-    }
+    setModalOpen(true);
   };
 
   return (
@@ -123,19 +120,21 @@ export function InstallAppButton({ variant = 'outline', size = 'sm', className =
         size={size}
         onClick={handleClick}
         className={className}
-        title="Install LDRS on your device"
+        title="Install Recovery on your device"
       >
         <Smartphone className="mr-1.5 h-4 w-4" aria-hidden="true" />
         <span>Install App</span>
       </Button>
 
       <InstallAppModal
-        open={modalOpen || showIosGuide}
+        open={modalOpen || showGuide}
         onOpenChange={(open) => {
           setModalOpen(open);
-          setShowIosGuide(open);
+          setShowGuide(open);
         }}
         isIos={isIos}
+        isAndroid={isAndroid}
+        hasNativePrompt={hasNativePrompt}
         onInstall={promptInstall}
       />
     </>

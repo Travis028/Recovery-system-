@@ -5,6 +5,14 @@ import App from '@/App';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import '@/index.css';
 
+// Early capture of beforeinstallprompt for Progressive Web App install flow
+window.__ldrsDeferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.__ldrsDeferredPrompt = e;
+  window.dispatchEvent(new CustomEvent('ldrs:prompt-ready'));
+});
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThemeProvider>
@@ -15,9 +23,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
 // Register service worker for Progressive Web App (PWA) installability
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Graceful fallback if offline or restricted
-    });
-  });
+  const register = () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+  };
+  if (document.readyState === 'complete') {
+    register();
+  } else {
+    window.addEventListener('load', register);
+  }
 }

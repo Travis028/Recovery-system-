@@ -20,7 +20,7 @@ export default function TopBar({ onOpenMenu, children }) {
         {screen ? screen.label : 'Lost Documents Recovery System'}
       </p>
       <div className="flex items-center gap-1.5">
-        <InstallAppButton variant="ghost" size="sm" className="hidden md:inline-flex text-xs h-8" />
+        <InstallAppButton variant="ghost" size="sm" className="hidden sm:inline-flex text-xs h-8" />
         <ThemeToggle />
         {children}
       </div>
