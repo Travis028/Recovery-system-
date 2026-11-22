@@ -5,7 +5,6 @@ import { api } from '@/api/client';
 import { serverAuthEnabled } from '@/api/serverAuth';
 import { reloadLdrsUser } from '@/hooks/useLdrsUser';
 import Brand from '@/components/layout/Brand';
-import DemoAccounts, { SHOW_DEMO_ACCOUNTS } from '@/components/auth/DemoAccounts';
 import DemoPhone, { SHOW_DEMO_PHONE } from '@/components/security/DemoPhone';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -63,9 +62,6 @@ export default function Login() {
   const requested = location.state && location.state.from;
   const destination = typeof requested === 'string' && requested.charAt(0) === '/' && requested.indexOf('//') !== 0 ? requested : '/dashboard';
   const [mode, setMode] = useState(initialMode); // login | two_step | register | forgot | reset
-  const [showDemoPreset, setShowDemoPreset] = useState(false);
-  const forceDemo = searchParams.get('demo') === '1' || searchParams.get('admin') === '1';
-  const isDemoVisible = forceDemo || showDemoPreset;
   const [signedIn, setSignedIn] = useState(false);
   const [backendOffline, setBackendOffline] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -279,28 +275,6 @@ export default function Login() {
                   Forgot password?
                 </LinkButton>
               </div>
-              {!serverAuthEnabled && SHOW_DEMO_ACCOUNTS ? (
-                <div className="mt-5 border-t border-dashed border-border pt-4 text-center">
-                  <button
-                    type="button"
-                    onClick={function () { setShowDemoPreset(!showDemoPreset); }}
-                    className="inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs text-muted-foreground/75 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
-                    <span>{isDemoVisible ? 'Hide Admin / Dev Demo Credentials' : 'Staff / Admin Demo Credentials'}</span>
-                  </button>
-                  {isDemoVisible ? (
-                    <div className="mt-3 text-left">
-                      <DemoAccounts
-                        onPick={function (account) {
-                          setEmail(account.email);
-                          setPassword(account.password);
-                        }}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
             </form>
           ) : null}
 
@@ -459,7 +433,7 @@ export default function Login() {
           ) : null}
         </div>
       </main>
-      {!serverAuthEnabled && SHOW_DEMO_PHONE && (isDemoVisible || mode === 'two_step') ? <DemoPhone /> : null}
+      {!serverAuthEnabled && SHOW_DEMO_PHONE && mode === 'two_step' ? <DemoPhone /> : null}
     </div>
   );
 }
