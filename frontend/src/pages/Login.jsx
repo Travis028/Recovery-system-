@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { KeyRound, Loader2, LockKeyhole, UserPlus } from 'lucide-react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, KeyRound, Loader2, LockKeyhole, UserPlus } from 'lucide-react';
 import { api } from '@/api/client';
 import { serverAuthEnabled } from '@/api/serverAuth';
 import { reloadLdrsUser } from '@/hooks/useLdrsUser';
@@ -231,7 +231,15 @@ export default function Login() {
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex h-topbar max-w-6xl items-center justify-between px-page-x">
         <Brand to="/" />
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" asChild className="gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+            <Link to="/">
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Back to Home</span>
+            </Link>
+          </Button>
+          <ThemeToggle />
+        </div>
       </header>
 
       <main className="mx-auto grid max-w-6xl items-start gap-10 px-page-x pb-16 pt-6 lg:grid-cols-[1fr_28rem] lg:pt-16">

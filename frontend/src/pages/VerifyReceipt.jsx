@@ -1,10 +1,11 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ShieldCheck, ShieldX } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, ShieldX } from 'lucide-react';
 import { api } from '@/api/client';
 import useResource from '@/hooks/useResource';
 import Brand from '@/components/layout/Brand';
 import Loader from '@/components/Loader';
 import ThemeToggle from '@/theme/ThemeToggle';
+import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/ldrs';
 import { cn } from '@/lib/utils';
 
@@ -34,8 +35,16 @@ export default function VerifyReceipt() {
   return (
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex h-topbar max-w-3xl items-center justify-between px-page-x">
-        <Brand to="/login" />
-        <ThemeToggle />
+        <Brand to="/" />
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" asChild className="gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+            <Link to="/">
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Back to Home</span>
+            </Link>
+          </Button>
+          <ThemeToggle />
+        </div>
       </header>
       <main className="flex justify-center px-page-x py-12">
         {loading || !result ? (

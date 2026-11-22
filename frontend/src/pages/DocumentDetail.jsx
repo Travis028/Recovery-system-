@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Archive, KeyRound, RotateCcw } from 'lucide-react';
+import { Archive, ArrowLeft, KeyRound, RotateCcw } from 'lucide-react';
 import { api } from '@/api/client';
 import useLdrsUser from '@/hooks/useLdrsUser';
 import PageHeader from '@/components/PageHeader';
@@ -93,6 +93,22 @@ function DocumentDetailContent() {
 
   return (
     <div className="space-y-section">
+      <PageHeader
+        title={documentTypeLabel(doc.document_type)}
+        description="Inspect document details, verification status, and handover records."
+        breadcrumbs={[
+          { label: 'Documents', to: '/documents' },
+          { label: doc.document_type || 'Record' },
+        ]}
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/documents" className="gap-1.5">
+              <ArrowLeft className="h-4 w-4" />
+              Back to documents
+            </Link>
+          </Button>
+        }
+      />
       {doc.duplicate_flag ? (
         <Alert tone="warning" title="Flagged as a possible duplicate">
           <ul className="list-disc space-y-1 pl-5">
