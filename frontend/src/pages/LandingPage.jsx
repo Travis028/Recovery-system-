@@ -16,6 +16,7 @@ import useLdrsUser from '@/hooks/useLdrsUser';
 import Brand from '@/components/layout/Brand';
 import ThemeToggle from '@/theme/ThemeToggle';
 import InstallAppBanner, { InstallAppButton } from '@/components/pwa/InstallAppBanner';
+import LiveStatusPill from '@/components/landing/LiveStatusPill';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -376,6 +377,7 @@ export default function LandingPage() {
         </div>
       </footer>
       <InstallAppBanner />
+      <LiveStatusPill />
     </div>
   );
 }
