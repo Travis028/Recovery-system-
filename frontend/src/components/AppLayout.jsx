@@ -10,7 +10,7 @@ import MobileNav from '@/components/layout/MobileNav';
 import TopBar from '@/components/layout/TopBar';
 import UserMenu from '@/components/layout/UserMenu';
 import AccountNotices from '@/components/layout/AccountNotices';
-import DemoPhone from '@/components/security/DemoPhone';
+import DemoPhone, { SHOW_DEMO_PHONE } from '@/components/security/DemoPhone';
 import Loader from '@/components/Loader';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
@@ -70,7 +70,7 @@ export default function AppLayout() {
         </main>
       </div>
 
-      {!serverAuthEnabled ? <DemoPhone /> : null}
+      {!serverAuthEnabled && SHOW_DEMO_PHONE ? <DemoPhone /> : null}
     </div>
   );
 }

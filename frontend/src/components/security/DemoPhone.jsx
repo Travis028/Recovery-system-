@@ -6,9 +6,12 @@ import { formatDateTime } from '@/lib/ldrs';
 const OUTBOX_KEY = 'ldrs.demo-sms.v1';
 const WIDE_SCREEN = '(min-width: 1024px)';
 
+// Shown only when VITE_SHOW_DEMO_PHONE is not "false" and no real SMS gateway is set.
+export const SHOW_DEMO_PHONE = import.meta.env.VITE_SHOW_DEMO_PHONE !== 'false';
+
 /**
  * Prototype only: shows the SMS messages LDRS would send (login codes, phone checks,
- * collection codes, alerts). Hidden when a real SMS gateway is configured.
+ * collection codes, alerts). Hidden when a real SMS gateway is configured or disabled in .env.
  *
  * It sits in the bottom-left corner, below the sidebar on wide screens and away from the
  * sign-in card. On wide screens a new message opens the panel; on phones it only raises the
@@ -40,7 +43,7 @@ export default function DemoPhone() {
     };
   }, []);
 
-  if (smsGatewayConfigured) return null;
+  if (smsGatewayConfigured || !SHOW_DEMO_PHONE) return null;
 
   const latest = messages.slice().reverse();
 

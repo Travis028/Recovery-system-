@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Toaster } from '@/components/ui/toaster';
 import Login from '@/pages/Login';
@@ -10,6 +10,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { SCREENS } from '@/lib/nav';
 
 // Each screen is its own chunk, so a visitor downloads only the screens their role opens.
+const LandingPage = lazy(() => import('@/pages/LandingPage'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const ReportFound = lazy(() => import('@/pages/ReportFound'));
 const Documents = lazy(() => import('@/pages/Documents'));
@@ -41,10 +42,10 @@ export default function App() {
       <ErrorBoundary>
         <Suspense fallback={<Loader label="Opening the page" />}>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/verify-receipt/:handoverId" element={<VerifyReceipt />} />
             <Route element={<AppLayout />}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               {guarded('/dashboard', 'dashboard', <Dashboard />)}
               {guarded('/report-found', 'reportFound', <ReportFound />)}
               {guarded('/documents', 'documents', <Documents />)}
