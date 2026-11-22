@@ -15,6 +15,7 @@ import {
 import useLdrsUser from '@/hooks/useLdrsUser';
 import Brand from '@/components/layout/Brand';
 import ThemeToggle from '@/theme/ThemeToggle';
+import InstallAppBanner, { InstallAppButton } from '@/components/pwa/InstallAppBanner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -44,7 +45,8 @@ export default function LandingPage() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <InstallAppButton variant="outline" size="sm" className="hidden sm:inline-flex text-xs h-8" />
             <ThemeToggle />
             {user ? (
               <Button asChild>
@@ -372,6 +374,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      <InstallAppBanner />
     </div>
   );
 }

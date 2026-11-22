@@ -11,6 +11,7 @@ import TopBar from '@/components/layout/TopBar';
 import UserMenu from '@/components/layout/UserMenu';
 import AccountNotices from '@/components/layout/AccountNotices';
 import DemoPhone, { SHOW_DEMO_PHONE } from '@/components/security/DemoPhone';
+import InstallAppBanner from '@/components/pwa/InstallAppBanner';
 import Loader from '@/components/Loader';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
@@ -71,6 +72,7 @@ export default function AppLayout() {
       </div>
 
       {!serverAuthEnabled && SHOW_DEMO_PHONE ? <DemoPhone /> : null}
+      <InstallAppBanner />
     </div>
   );
 }

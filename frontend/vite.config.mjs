@@ -73,8 +73,8 @@ export default defineConfig({
     strictPort: true,
     // Allow the dev server to read ../shared (the project root is one level up).
     fs: { allow: [path.join(root, '..')] },
-    // Limit the development server to this laptop because /api/v6 is proxied to the backend.
-    host: '127.0.0.1',
+    // Listen on all addresses (localhost, 127.0.0.1, and LAN for mobile testing)
+    host: true,
     // LDRS v6 backend (backend/, port 4001). Same-origin proxy keeps the session cookie HttpOnly + SameSite=Strict.
     proxy: {
       '/api/v6': {
@@ -96,7 +96,7 @@ export default defineConfig({
   preview: {
     port: 5175,
     strictPort: true,
-    host: '127.0.0.1',
+    host: true,
     proxy: {
       '/api/v6': {
         target: 'http://127.0.0.1:4001',

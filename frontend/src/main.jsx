@@ -12,3 +12,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </ThemeProvider>
   </React.StrictMode>,
 );
+
+// Register service worker for Progressive Web App (PWA) installability
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Graceful fallback if offline or restricted
+    });
+  });
+}

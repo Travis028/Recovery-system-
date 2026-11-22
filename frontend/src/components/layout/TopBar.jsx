@@ -3,6 +3,7 @@ import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Brand from '@/components/layout/Brand';
 import ThemeToggle from '@/theme/ThemeToggle';
+import { InstallAppButton } from '@/components/pwa/InstallAppBanner';
 import { screenForPath } from '@/lib/nav';
 
 export default function TopBar({ onOpenMenu, children }) {
@@ -18,7 +19,8 @@ export default function TopBar({ onOpenMenu, children }) {
       <p className="min-w-0 flex-1 truncate text-sm font-medium text-muted-foreground">
         {screen ? screen.label : 'Lost Documents Recovery System'}
       </p>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
+        <InstallAppButton variant="ghost" size="sm" className="hidden md:inline-flex text-xs h-8" />
         <ThemeToggle />
         {children}
       </div>
